@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工具中心 · 领功 & 返现易</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --lg:#C8202A;--lg-dk:#9B1820;--lg-bg:#FEF2F2;--lg-bd:#FECACA;
+  --fx:#2563EB;--fx-dk:#1D4ED8;--fx-bg:#EFF6FF;--fx-bd:#BFDBFE;
+  --bg:#F0EFE9;--surface:#FFFFFF;--surface2:#FAFAF7;--surface3:#F5F4F0;
+  --text:#111;--text2:#52524A;--text3:#9A9A90;
+  --bd:#E2E1D8;--bd2:#C8C7BC;
+  --sh:0 1px 2px rgba(0,0,0,.05);
+  --sh2:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
+  --sh3:0 16px 40px rgba(0,0,0,.12),0 4px 8px rgba(0,0,0,.06);
+  --r:8px;--r-sm:6px;--r-lg:12px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,'PingFang SC','Hiragino Sans GB',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ═══ TOPBAR ═══ */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:500;height:48px;background:var(--surface);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 1.25rem;gap:10px;box-shadow:var(--sh)}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
+.logo-mark{width:26px;height:26px;background:var(--lg);border-radius:6px;display:grid;place-items:center;font-size:13px;color:#fff;flex-shrink:0}
+.logo-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.logo-div{width:1px;height:14px;background:var(--bd);margin:0 2px}
+.logo-proj{font-size:12px;color:var(--text3)}
+.tb-nav{display:flex;gap:1px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:2px;flex-shrink:0}
+.tn{padding:4px 11px;border-radius:4px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .1s;white-space:nowrap}
+.tn:hover{color:var(--text);background:rgba(0,0,0,.04)}
+.tn.on{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--sh)}
+.tb-gap{flex:1}
+.search-box{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;transition:all .15s;width:170px}
+.search-box:focus-within{border-color:var(--bd2);background:var(--surface);width:220px;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.search-box svg{color:var(--text3);flex-shrink:0}
+.search-box input{border:none;outline:none;background:transparent;font-size:12px;color:var(--text);width:100%;font-family:inherit}
+.search-box input::placeholder{color:var(--text3)}
+.tbtn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .1s;border:1px solid;white-space:nowrap;flex-shrink:0}
+.tbtn-ghost{background:transparent;border-color:var(--bd);color:var(--text2)}
+.tbtn-ghost:hover{border-color:var(--bd2);color:var(--text);background:var(--surface3)}
+.tbtn-red{background:var(--lg);border-color:var(--lg);color:#fff}
+.tbtn-red:hover{background:var(--lg-dk);border-color:var(--lg-dk)}
+
+/* ═══ PAGE LAYOUT ═══ */
+.page{margin-top:48px;display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 48px)}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{background:var(--surface);border-right:1px solid var(--bd);padding:1rem 0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto}
+.sb-sec{padding:0 .75rem;margin-bottom:1rem}
+.sb-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:0 .5rem;margin-bottom:.35rem}
+.sb-btn{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:5px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .1s;border:none;background:transparent;width:100%;text-align:left;font-family:inherit}
+.sb-btn:hover{background:var(--bg);color:var(--text)}
+.sb-btn.on{background:var(--bg);color:var(--text);font-weight:600}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sb-cnt{margin-left:auto;font-size:10px;color:var(--text3);background:var(--surface3);padding:1px 6px;border-radius:6px;border:1px solid var(--bd)}
+.sb-btn.on .sb-cnt{background:var(--surface);border-color:var(--bd2)}
+.sb-div{height:1px;background:var(--bd);margin:.75rem .75rem}
+.sb-box{margin:0 .75rem;padding:.625rem .75rem;background:var(--surface3);border-radius:var(--r);border:1px solid var(--bd)}
+.sb-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0}
+.sb-row span:first-child{color:var(--text3)}
+.sb-row span:last-child{font-weight:600;color:var(--text)}
+
+/* ═══ CONTENT ═══ */
+.content{padding:1.25rem;min-width:0}
+
+/* ═══ WORKBENCH ═══ */
+.wb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+.wbc{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r);padding:.875rem 1rem;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;transition:box-shadow .15s}
+.wbc:hover{box-shadow:var(--sh2)}
+.wbc-ico{width:32px;height:32px;border-radius:7px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.wbc-n{font-size:20px;font-weight:800;letter-spacing:-.5px;line-height:1;color:var(--text)}
+.wbc-lbl{font-size:11px;color:var(--text3);margin-top:1px}
+.wbc-sub{font-size:10px;color:var(--text3);margin-top:0}
+
+/* recent */
+.wb-recent{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.25rem;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wb-rlbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.rc-chips{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.rc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:16px;border:1px solid var(--bd);background:var(--surface3);font-size:12px;color:var(--text2);cursor:pointer;text-decoration:none;transition:all .1s}
+.rc:hover{border-color:var(--bd2);color:var(--text);background:var(--surface)}
+.rc-ico{font-size:12px}
+.rc-empty{font-size:11px;color:var(--text3);font-style:italic}
+
+/* ═══ CONTENT HEAD ═══ */
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.ch-title{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.ch-cnt{font-size:11px;color:var(--text3);background:var(--surface);border:1px solid var(--bd);padding:1px 8px;border-radius:8px}
+
+/* ═══ PROJECT ═══ */
+.project{margin-bottom:1.75rem}
+.proj-bar{display:flex;align-items:center;gap:8px;padding:.625rem .875rem;background:var(--surface);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:.875rem;box-shadow:var(--sh)}
+.proj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.proj-name{font-size:13px;font-weight:700;letter-spacing:-.2px}
+.proj-desc{font-size:11px;color:var(--text3);flex:1}
+.proj-cnt{font-size:10px;color:var(--text3);background:var(--bg);border:1px solid var(--bd);padding:2px 8px;border-radius:8px}
+
+/* ═══ SUBCAT ═══ */
+.sub-cat{margin-bottom:1.125rem}
+.sub-cat-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.625rem;display:flex;align-items:center;gap:7px;padding-left:1px}
+.sub-cat-lbl::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* ═══ TOOL GRID ═══ */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+
+/* ═══ TOOL CARD ═══ */
+.tcard{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh);transition:box-shadow .15s,transform .14s,border-color .12s;position:relative}
+.tcard:hover{box-shadow:var(--sh2);transform:translateY(-2px);border-color:var(--bd2)}
+.tcard-stripe{height:3px;width:100%}
+.tcard-tr{position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:4px;z-index:2}
+
+/* STATUS */
+.stag{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:600;border:1px solid;letter-spacing:.02em}
+.sd{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.s-online{background:#F0FDF4;color:#15803D;border-color:#BBF7D0}.s-online .sd{background:#22C55E}
+.s-testing{background:#FFFBEB;color:#B45309;border-color:#FDE68A}.s-testing .sd{background:#F59E0B}
+.s-pending{background:#F9FAFB;color:#6B7280;border-color:#E5E7EB}.s-pending .sd{background:#9CA3AF}
+.s-improving{background:#F5F3FF;color:#7C3AED;border-color:#DDD6FE}.s-improving .sd{background:#A78BFA}
+.s-offline{background:var(--lg-bg);color:#DC2626;border-color:var(--lg-bd)}.s-offline .sd{background:#EF4444}
+
+/* FAV */
+.fav-btn{width:22px;height:22px;border-radius:4px;border:1px solid var(--bd);background:var(--surface);cursor:pointer;display:grid;place-items:center;font-size:11px;transition:all .1s;flex-shrink:0}
+.fav-btn:hover{border-color:var(--bd2);background:var(--surface3)}
+.fav-btn.starred{border-color:#FDE68A;background:#FFFBEB}
+
+/* CARD BODY */
+.tc-top{padding:.875rem .875rem .625rem;display:flex;gap:10px;padding-right:5.5rem}
+.tc-ico{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;font-size:19px;flex-shrink:0;background:var(--surface3);border:1px solid var(--bd)}
+.tc-name{font-size:14px;font-weight:700;letter-spacing:-.2px;color:var(--text);line-height:1.25;margin-bottom:1px}
+.tc-sub{font-size:11px;color:var(--text3);line-height:1.3}
+.tc-meta{margin-top:3px;display:flex;gap:4px;flex-wrap:wrap}
+.tc-mpill{font-size:10px;color:var(--text3);background:var(--surface3);border:1px solid var(--bd);padding:1px 6px;border-radius:5px}
+
+.tc-body{padding:0 .875rem .75rem;flex:1}
+.tc-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:.625rem;padding-bottom:.625rem;border-bottom:1px solid var(--bd)}
+.feats{display:flex;flex-direction:column;gap:4px}
+.feat{display:flex;align-items:flex-start;gap:5px;font-size:11px;color:var(--text2);line-height:1.5}
+.feat-b{width:4px;height:4px;border-radius:50%;margin-top:4px;flex-shrink:0;opacity:.45}
+
+/* URL ROW */
+.url-row{margin:0 .875rem .625rem;padding:.5rem .75rem;border-radius:var(--r-sm);background:var(--surface3);border:1px solid var(--bd);display:flex;align-items:center;gap:5px;transition:border-color .1s}
+.url-row:hover{border-color:var(--bd2)}
+.url-ico{color:var(--text3);flex-shrink:0}
+.url-txt{flex:1;font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono','Fira Mono',monospace}
+.url-txt.live{color:var(--fx);cursor:pointer}
+.url-txt.live:hover{color:var(--fx-dk);text-decoration:underline}
+.url-edit{width:22px;height:22px;border-radius:4px;border:1px solid var(--bd);background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--text3);flex-shrink:0;transition:all .1s}
+.url-edit:hover{border-color:var(--bd2);color:var(--text);background:var(--surface)}
+
+/* CARD FOOT */
+.tc-foot{padding:.625rem .875rem;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--surface2)}
+.fl{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.ftag{font-size:10px;padding:2px 7px;border-radius:7px;font-weight:500;border:1px solid}
+.t-效率{background:var(--fx-bg);color:var(--fx-dk);border-color:var(--fx-bd)}
+.t-数据{background:#FFFBEB;color:#B45309;border-color:#FDE68A}
+.t-系统{background:#F0FDF4;color:#15803D;border-color:#BBF7D0}
+.t-流程{background:#F5F3FF;color:#7C3AED;border-color:#DDD6FE}
+.t-文档{background:#FEF2F2;color:#B91C1C;border-color:#FECACA}
+.fmt{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text3);background:var(--surface3);border:1px solid var(--bd);padding:2px 6px;border-radius:5px}
+.fr{display:flex;align-items:center;gap:4px}
+.cbtn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .12s;text-decoration:none;border:1px solid;white-space:nowrap}
+.cbtn-edit{background:transparent;border-color:var(--bd);color:var(--text2)}
+.cbtn-edit:hover{border-color:var(--bd2);color:var(--text);background:var(--surface3)}
+.cbtn-off{color:var(--text3);border-color:var(--bd);background:transparent;cursor:default;font-size:11px}
+
+/* ═══ MODALS ═══ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:900;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s;backdrop-filter:blur(3px)}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-lg);width:480px;max-width:92vw;max-height:90vh;overflow-y:auto;box-shadow:var(--sh3);transform:translateY(10px) scale(.98);transition:transform .18s}
+.overlay.open .modal{transform:translateY(0) scale(1)}
+.modal-hd{display:flex;align-items:flex-start;justify-content:space-between;padding:1.125rem 1.25rem 0;gap:1rem}
+.modal-ttl{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.modal-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.modal-x{width:26px;height:26px;border-radius:5px;border:1px solid var(--bd);background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--text2);flex-shrink:0;transition:all .1s}
+.modal-x:hover{border-color:var(--bd2);color:var(--text)}
+.modal-prev{display:flex;align-items:center;gap:9px;background:var(--surface3);border:1px solid var(--bd);border-radius:var(--r-sm);padding:.75rem 1rem;margin:1rem 1.25rem 0}
+.mbody{padding:.875rem 1.25rem 1.25rem}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.frow{margin-bottom:.75rem}
+.frow label{display:block;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.frow input,.frow select,.frow textarea{width:100%;background:var(--surface);border:1px solid var(--bd);border-radius:var(--r-sm);padding:7px 10px;font-size:13px;color:var(--text);outline:none;font-family:inherit;transition:border-color .12s;-webkit-appearance:none}
+.frow textarea{resize:vertical;min-height:62px;line-height:1.55}
+.frow input:focus,.frow select:focus,.frow textarea:focus{border-color:var(--fx);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.frow input::placeholder,.frow textarea::placeholder{color:var(--text3)}
+.fhint{font-size:11px;color:var(--text3);background:var(--surface3);border:1px solid var(--bd);border-radius:var(--r-sm);padding:.6rem .875rem;line-height:1.65;margin-bottom:.75rem}
+.fhint strong{color:var(--text2)}
+.mactions{display:flex;gap:7px;justify-content:flex-end;padding-top:.75rem;border-top:1px solid var(--bd)}
+.mbtn{padding:7px 15px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .1s;border:1px solid}
+.mbtn-cancel{background:transparent;border-color:var(--bd);color:var(--text2)}
+.mbtn-cancel:hover{border-color:var(--bd2);color:var(--text)}
+.mbtn-del{background:transparent;border-color:var(--lg-bd);color:#DC2626}
+.mbtn-del:hover{background:var(--lg-bg)}
+.mbtn-save{border-color:var(--fx);background:var(--fx);color:#fff}
+.mbtn-save:hover{background:var(--fx-dk)}
+
+/* ═══ TOAST ═══ */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:#fff;font-size:13px;font-weight:500;padding:7px 16px;border-radius:20px;z-index:2000;opacity:0;transition:all .18s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+mark{background:#FEF08A;color:#78350F;border-radius:2px;padding:0 2px}
+.empty{text-align:center;padding:4rem;color:var(--text3);font-size:13px}
+footer{border-top:1px solid var(--bd);padding:1.125rem;text-align:center;font-size:11px;color:var(--text3)}
+
+@media(max-width:900px){
+  .page{grid-template-columns:1fr}.sidebar{display:none}
+  .wb-grid{grid-template-columns:repeat(2,1fr)}.fr2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="logo" href="#" onclick="setFilter('all');return false">
+    <div class="logo-mark">⚡</div>
+    <span class="logo-name">工具中心</span>
+    <div class="logo-div"></div>
+    <span class="logo-proj">领功 & 返现易</span>
+  </a>
+  <div class="tb-nav">
+    <button class="tn on" onclick="setFilter('all',this)">全部</button>
+    <button class="tn" onclick="setFilter('linggong',this)">领功</button>
+    <button class="tn" onclick="setFilter('fanxianyi',this)">返现易</button>
+    <button class="tn" onclick="setFilter('fav',this)">⭐ 收藏</button>
+  </div>
+  <div class="tb-gap"></div>
+  <div class="search-box">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="搜索工具…" oninput="doSearch(this.value)">
+  </div>
+  <button class="tbtn tbtn-ghost" onclick="exportConfig()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出
+  </button>
+  <label class="tbtn tbtn-ghost" style="cursor:pointer">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>导入
+    <input type="file" accept=".json" style="display:none" onchange="importConfig(event)">
+  </label>
+  <button class="tbtn tbtn-red" onclick="openAddModal()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增工具
+  </button>
+</header>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-sec">
+      <div class="sb-lbl">工具筛选</div>
+      <button class="sb-btn on" id="sb-all" onclick="setSbF('all',this)">
+        <span style="font-size:13px">🧰</span>全部工具
+        <span class="sb-cnt" id="scnt-all">5</span>
+      </button>
+      <button class="sb-btn" id="sb-lg" onclick="setSbF('linggong',this)">
+        <span class="sb-dot" style="background:var(--lg)"></span>领功项目
+        <span class="sb-cnt" id="scnt-lg">3</span>
+      </button>
+      <button class="sb-btn" id="sb-fx" onclick="setSbF('fanxianyi',this)">
+        <span class="sb-dot" style="background:var(--fx)"></span>返现易项目
+        <span class="sb-cnt" id="scnt-fx">2</span>
+      </button>
+      <button class="sb-btn" id="sb-fav" onclick="setSbF('fav',this)">
+        <span style="font-size:12px">⭐</span>我的收藏
+        <span class="sb-cnt" id="scnt-fav">0</span>
+      </button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">按状态</div>
+      <button class="sb-btn" onclick="setSbF('online',this)"><span class="sb-dot" style="background:#22C55E"></span>已上线<span class="sb-cnt" id="scnt-on">—</span></button>
+      <button class="sb-btn" onclick="setSbF('testing',this)"><span class="sb-dot" style="background:#F59E0B"></span>测试中<span class="sb-cnt" id="scnt-ts">—</span></button>
+      <button class="sb-btn" onclick="setSbF('pending',this)"><span class="sb-dot" style="background:#9CA3AF"></span>待配置<span class="sb-cnt" id="scnt-pd">—</span></button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">数据概览</div>
+      <div class="sb-box">
+        <div class="sb-row"><span>工具总数</span><span id="ss-tot">—</span></div>
+        <div class="sb-row"><span>已配置链接</span><span id="ss-lnk">—</span></div>
+        <div class="sb-row"><span>累计打开</span><span id="ss-op">—</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <!-- workbench stats -->
+    <div class="wb-grid">
+      <div class="wbc">
+        <div class="wbc-ico" style="background:#FEF2F2">🧰</div>
+        <div><div class="wbc-n" id="wbTotal">—</div><div class="wbc-lbl">工具总数</div><div class="wbc-sub" id="wbOnline"></div></div>
+      </div>
+      <div class="wbc">
+        <div class="wbc-ico" style="background:var(--fx-bg)">🔗</div>
+        <div><div class="wbc-n" id="wbLinked">—</div><div class="wbc-lbl">已配置链接</div><div class="wbc-sub" id="wbPending"></div></div>
+      </div>
+      <div class="wbc">
+        <div class="wbc-ico" style="background:#FFFBEB">⭐</div>
+        <div><div class="wbc-n" id="wbFav">—</div><div class="wbc-lbl">已收藏</div><div class="wbc-sub">星标工具</div></div>
+      </div>
+      <div class="wbc">
+        <div class="wbc-ico" style="background:#F0FDF4">📂</div>
+        <div><div class="wbc-n" id="wbOpened">—</div><div class="wbc-lbl">累计打开</div><div class="wbc-sub">次数统计</div></div>
+      </div>
+    </div>
+
+    <!-- recent -->
+    <div class="wb-recent" id="recentWrap"></div>
+
+    <!-- list header -->
+    <div class="ch">
+      <span class="ch-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        工具列表 <span class="ch-cnt" id="toolCount">5 个</span>
+      </span>
+    </div>
+
+    <div id="board"></div>
+    <footer>由 Claude 生成 · 领功 & 返现易业务工具中心 · 数据保存于本地浏览器</footer>
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div class="overlay" id="linkOverlay" onclick="onOC(event,'linkOverlay')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-ttl">配置访问链接</div><div class="modal-sub">填入在线 URL 或本地文件路径</div></div>
+      <button class="modal-x" onclick="closeModal('linkOverlay')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-prev">
+      <span id="lmIco" style="font-size:20px"></span>
+      <div><div style="font-size:13px;font-weight:600" id="lmName"></div><div style="font-size:11px;color:var(--text3)" id="lmSub"></div></div>
+    </div>
+    <div class="mbody">
+      <div class="frow"><label>访问链接</label><input type="text" id="lmUrl" placeholder="https://example.com 或 file:///path/to/tool.html"></div>
+      <div class="fhint"><strong>在线</strong> → https:// 链接，保存后可直接跳转 &nbsp;·&nbsp; <strong>本地</strong> → file:///完整路径 &nbsp;·&nbsp; <strong>留空</strong> → 清除链接</div>
+      <div class="mactions">
+        <button class="mbtn mbtn-del" onclick="clearLmUrl()">清除链接</button>
+        <button class="mbtn mbtn-cancel" onclick="closeModal('linkOverlay')">取消</button>
+        <button class="mbtn mbtn-save" onclick="saveLmUrl()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="toolOverlay" onclick="onOC(event,'toolOverlay')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-ttl" id="tmTitle">新增工具</div><div class="modal-sub">工具信息保存到本地，可随时编辑</div></div>
+      <button class="modal-x" onclick="closeModal('toolOverlay')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div class="fr2">
+        <div class="frow"><label>工具名称 *</label><input type="text" id="tmName" placeholder="例：领功中台"></div>
+        <div class="frow"><label>副标题</label><input type="text" id="tmSub" placeholder="例：完整版 · 灵兔对账单"></div>
+      </div>
+      <div class="fr2">
+        <div class="frow"><label>所属项目 *</label>
+          <select id="tmProject"><option value="linggong">领功</option><option value="fanxianyi">返现易</option></select>
+        </div>
+        <div class="frow"><label>分类 *</label>
+          <select id="tmCat">
+            <option value="对账核算类">对账核算类</option><option value="文件生成类">文件生成类</option>
+            <option value="劳务系统类">劳务系统类</option><option value="运营看板类">运营看板类</option>
+            <option value="开票流程类">开票流程类</option><option value="商城管理类">商城管理类</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr2">
+        <div class="frow"><label>标签</label>
+          <select id="tmTag"><option value="效率">效率</option><option value="数据">数据</option><option value="系统">系统</option><option value="流程">流程</option></select>
+        </div>
+        <div class="frow"><label>状态</label>
+          <select id="tmStatus"><option value="online">已上线</option><option value="testing">测试中</option><option value="pending">待配置</option><option value="improving">待优化</option><option value="offline">已停用</option></select>
+        </div>
+      </div>
+      <div class="fr2">
+        <div class="frow"><label>文件格式</label><input type="text" id="tmFormat" placeholder="例：HTML"></div>
+        <div class="frow"><label>图标 Emoji</label><input type="text" id="tmIcon" placeholder="例：🧾" maxlength="4"></div>
+      </div>
+      <div class="frow"><label>简介描述</label><textarea id="tmDesc" placeholder="一句话说明这个工具是做什么的…"></textarea></div>
+      <div class="frow"><label>功能要点（每行一条）</label><textarea id="tmFeats" placeholder="支持多列自动识别&#10;一键生成文件" style="min-height:60px"></textarea></div>
+      <div class="frow"><label>访问链接</label><input type="text" id="tmUrl" placeholder="https://… 或留空后续配置"></div>
+      <div class="mactions">
+        <button class="mbtn mbtn-del" id="tmDelBtn" onclick="deleteTool()" style="display:none;margin-right:auto">删除工具</button>
+        <button class="mbtn mbtn-cancel" onclick="closeModal('toolOverlay')">取消</button>
+        <button class="mbtn mbtn-save" onclick="saveTool()">保存工具</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DT=[
+  {id:"zhongtai",project:"linggong",cat:"对账核算类",name:"领功中台",sub:"完整版 · 灵兔对账单",icon:"🧾",tag:"效率",format:"HTML",status:"online",desc:"灵兔渠道佣金核算管理系统，处理从上传到核算的完整对账流程，修复了 DOM 列索引偏移问题。",features:["支持渠道姓名、合作公司、服务公司多列自动识别","签约费率 / 对渠道费率列自动读取","总下发金额、渠道佣金合计、税后渠道佣金自动计算","DOM 列索引修复，页面显示与取数完全对齐"]},
+  {id:"wenjian",project:"linggong",cat:"文件生成类",name:"灵活用工文件生成器",sub:"确认函 + 结算清单",icon:"📄",tag:"效率",format:"HTML",status:"online",desc:"上传用工流水 Excel，自动识别乙方和费率，一键生成确认函与结算清单，支持多格式下载。",features:["乙方名称和费率从流水数据自动识别","生成 xlsx 结算清单 / docx 确认函","确认函需打印盖章后上传平台","解决企业列表为空、月份识别、预览仅15行等常见问题"]},
+  {id:"laowu",project:"linggong",cat:"劳务系统类",name:"劳务管理系统",sub:"含 API 文档 + Schema",icon:"👥",tag:"系统",format:"HTML · SQL",status:"testing",desc:"供应商劳务系统完整原型，涵盖主系统 UI、接口规范文档、数据库结构设计三个部分。",features:["主系统 HTML 原型界面（Labor System）","完整 API 接口文档（Api Docs · HTML）","数据库结构设计（Schema · SQL）","规划个税计算、定时任务逻辑、劳务人员小程序端"]},
+  {id:"dashboard",project:"fanxianyi",cat:"运营看板类",name:"返现平台运营看板",sub:"Ops Dashboard",icon:"📊",tag:"数据",format:"HTML",status:"online",desc:"返现易平台全功能运营数据看板，品牌红白配色，支持数据上传、商城管理和多格式导出。",features:["品牌红 #C8202A 配色，左侧固定分组导航栏","上传结算 .xlsx：完全覆盖 / 增量合并两种模式","引入新商城：名称、合作状态、风险等级等字段","导出 JSON（可再次导入）/ CSV（Excel 可打开）"]},
+  {id:"kaipiao",project:"fanxianyi",cat:"开票流程类",name:"联盟开票流程平台",sub:"提现 · 开票 · 全流程",icon:"🏷️",tag:"流程",format:"HTML",status:"online",desc:"联盟平台提现开票全流程整合系统，步骤引导式操作，红色主题，层次清晰。",features:["白底侧边栏导航，选中项高亮红色背景","步骤序号、链接按钮统一红色主题","警告提示用淡红色，备注说明用淡黄色","卡片和表格带轻微阴影，视觉层次分明"]},
+  {id:"zhongtai2",project:"fanxianyi",cat:"运营看板类",name:"返现易运营管理中台",sub:"完整版 · 含快照功能",icon:"🖥️",tag:"数据",format:"HTML",status:"online",desc:"返现易完整运营管理中台，在看板基础上新增平台流程指引、开票信息库、月度台账，以及一键生成系统快照发给同事只读查看。",features:["涵盖总览看板、结算数据图表、商城列表全模块","内置联盟平台提现开票 SOP 流程指引","月度台账数据录入与结算趋势分析","一键导出只读快照 HTML，带橙色横幅标识"]},
+  {id:"shangcheng",project:"fanxianyi",cat:"文档与表格类",name:"商城合作情况汇报表",sub:"Excel 多 Sheet 汇报版",icon:"📑",tag:"文档",format:"XLSX",status:"online",desc:"将返现易 36 家合作商城明细升级为专业汇报格式，含 KPI 看板、分类汇总、异常跟进清单和柱状图，可直接提交领导。",features:["封面 KPI：总商城数、正常数、异常数、正常率一览","按电商/酒旅/数码等类别分组统计，附柱状图","异常商城跟进清单：优先级标签 + 处理建议 + 跟进日期","保留可编辑字段，方便持续更新跟进状态"]},
+  {id:"chengben",project:"linggong",cat:"文档与表格类",name:"业务流程成本梳理文档",sub:"领功 & 返现易 八大流程",icon:"📋",tag:"文档",format:"DOCX",status:"online",desc:"对领功与返现易两个项目八大核心业务流程进行成本拆解，引入 AI 优化测算，含总览汇总表和各流程详细步骤，可直接提交领导审阅。",features:["八大流程：含人力耗时、频次、年成本完整核算","AI 优化前后对比：当前 12.7 万 → 优化后 6.5 万，节省 49%","各流程按「步骤 / 负责人 / 耗时 / 成本 / 问题 / AI价值」六步法展开","附邮件发送模板，可直接用于向领导汇报"]},
+  {id:"cmhk",project:"fanxianyi",cat:"文档与表格类",name:"CMHK×返现易成本测算表",sub:"联动经营方案 · 成本模型",icon:"📊",tag:"文档",format:"XLSX",status:"online",desc:"中国移动香港与返现易联动经营方案的成本测算模型，覆盖首单/二单返现成本、佣金费率区间、净收益测算，支持多场景对比。",features:["基准场景：20人首单 + 10人二单成本拆解","佣金费率 15% / 20% / 30% 三档净收益对比","固定运营成本摊薄分析（随复购逐步回本）","分 Sheet 展示：参数配置 / 场景模拟 / 基准汇总"]}
+];
+const PJ={
+  linggong:{label:"领功",color:"#C8202A",desc:"灵兔对账、用工结算、劳务系统等核心业务工具",cats:["对账核算类","文件生成类","劳务系统类","文档与表格类"]},
+  fanxianyi:{label:"返现易",color:"#2563EB",desc:"返现平台运营数据看板与联盟开票全流程管理",cats:["运营看板类","开票流程类","文档与表格类"]}
+};
+const SM={online:{l:"已上线",c:"s-online"},testing:{l:"测试中",c:"s-testing"},pending:{l:"待配置",c:"s-pending"},improving:{l:"待优化",c:"s-improving"},offline:{l:"已停用",c:"s-offline"}};
+const SK="tc_v4";
+function ls(){try{return JSON.parse(localStorage.getItem(SK)||"{}");}catch(e){return{};}}
+function ss(s){localStorage.setItem(SK,JSON.stringify(s));}
+let st=ls();
+if(!st.tools)st.tools=[...DT];
+if(!st.urls)st.urls={};if(!st.favs)st.favs={};if(!st.opens)st.opens={};if(!st.recent)st.recent=[];
+const persist=()=>ss(st);
+let curF="all",curKw="",editId=null,lmId=null;
+
+function setFilter(f,btn){
+  curF=f;
+  document.querySelectorAll('.tn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  else document.querySelectorAll('.tn').forEach(b=>{
+    if((f==='all'&&b.textContent.trim()==='全部')||(f==='linggong'&&b.textContent.trim()==='领功')||(f==='fanxianyi'&&b.textContent.trim()==='返现易')||(f==='fav'&&b.textContent.includes('收藏')))b.classList.add('on');
+  });
+  syncSb(f);render();
+}
+function setSbF(f,btn){
+  curF=f;
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  document.querySelectorAll('.tn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tn').forEach(b=>{
+    if((f==='all'&&b.textContent.trim()==='全部')||(f==='linggong'&&b.textContent.trim()==='领功')||(f==='fanxianyi'&&b.textContent.trim()==='返现易')||(f==='fav'&&b.textContent.includes('收藏')))b.classList.add('on');
+  });
+  render();
+}
+function syncSb(f){
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  const m={all:'sb-all',linggong:'sb-lg',fanxianyi:'sb-fx',fav:'sb-fav'};
+  if(m[f])document.getElementById(m[f])?.classList.add('on');
+}
+function doSearch(v){curKw=v.toLowerCase().trim();render();}
+function hl(t,k){if(!k)return t;return t.replace(new RegExp(`(${k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark>$1</mark>');}
+function toggleFav(id,e){e.stopPropagation();st.favs[id]=!st.favs[id];if(!st.favs[id])delete st.favs[id];persist();render();}
+function recOpen(url,id){if(!url)return;st.opens[id]=(st.opens[id]||0)+1;st.recent=st.recent.filter(r=>r!==id);st.recent.unshift(id);if(st.recent.length>8)st.recent=st.recent.slice(0,8);persist();window.open(url,'_blank');setTimeout(render,300);}
+
+// link modal
+function openLm(id){lmId=id;const t=st.tools.find(x=>x.id===id);document.getElementById('lmIco').textContent=t.icon||'🔧';document.getElementById('lmName').textContent=t.name;document.getElementById('lmSub').textContent=t.sub||'';document.getElementById('lmUrl').value=st.urls[id]||'';openModal('linkOverlay');setTimeout(()=>document.getElementById('lmUrl').select(),250);}
+function saveLmUrl(){const v=document.getElementById('lmUrl').value.trim();if(v)st.urls[lmId]=v;else delete st.urls[lmId];persist();closeModal('linkOverlay');toast(v?'✅ 链接已保存':'🗑 链接已清除');render();}
+function clearLmUrl(){document.getElementById('lmUrl').value='';}
+document.getElementById('lmUrl').addEventListener('keydown',e=>{if(e.key==='Enter')saveLmUrl();});
+
+// tool modal
+function openAddModal(){editId=null;document.getElementById('tmTitle').textContent='新增工具';document.getElementById('tmDelBtn').style.display='none';['tmName','tmSub','tmDesc','tmUrl'].forEach(i=>document.getElementById(i).value='');document.getElementById('tmFeats').value='';document.getElementById('tmIcon').value='🔧';document.getElementById('tmFormat').value='HTML';document.getElementById('tmProject').value='linggong';document.getElementById('tmCat').value='对账核算类';document.getElementById('tmTag').value='效率';document.getElementById('tmStatus').value='pending';openModal('toolOverlay');setTimeout(()=>document.getElementById('tmName').focus(),250);}
+function openEditModal(id){editId=id;const t=st.tools.find(x=>x.id===id);document.getElementById('tmTitle').textContent='编辑工具';document.getElementById('tmDelBtn').style.display='block';document.getElementById('tmName').value=t.name||'';document.getElementById('tmSub').value=t.sub||'';document.getElementById('tmDesc').value=t.desc||'';document.getElementById('tmFeats').value=(t.features||[]).join('\n');document.getElementById('tmIcon').value=t.icon||'🔧';document.getElementById('tmFormat').value=t.format||'HTML';document.getElementById('tmProject').value=t.project||'linggong';document.getElementById('tmCat').value=t.cat||'对账核算类';document.getElementById('tmTag').value=t.tag||'效率';document.getElementById('tmStatus').value=t.status||'online';document.getElementById('tmUrl').value=st.urls[id]||'';openModal('toolOverlay');}
+function saveTool(){const name=document.getElementById('tmName').value.trim();if(!name){toast('❌ 工具名称不能为空');return;}const features=document.getElementById('tmFeats').value.split('\n').map(s=>s.trim()).filter(Boolean);const url=document.getElementById('tmUrl').value.trim();const data={name,sub:document.getElementById('tmSub').value.trim(),desc:document.getElementById('tmDesc').value.trim(),features,icon:document.getElementById('tmIcon').value.trim()||'🔧',format:document.getElementById('tmFormat').value.trim()||'HTML',project:document.getElementById('tmProject').value,cat:document.getElementById('tmCat').value,tag:document.getElementById('tmTag').value,status:document.getElementById('tmStatus').value};if(editId){const i=st.tools.findIndex(t=>t.id===editId);if(i>-1)st.tools[i]={...st.tools[i],...data};if(url)st.urls[editId]=url;else if(!url&&st.urls[editId])delete st.urls[editId];}else{const id='t'+Date.now();st.tools.push({id,...data});if(url)st.urls[id]=url;}persist();closeModal('toolOverlay');toast(editId?'✅ 工具已更新':'✅ 工具已添加');render();}
+function deleteTool(){if(!editId)return;if(!confirm('确认删除这个工具吗？'))return;st.tools=st.tools.filter(t=>t.id!==editId);delete st.urls[editId];delete st.favs[editId];delete st.opens[editId];st.recent=st.recent.filter(r=>r!==editId);persist();closeModal('toolOverlay');toast('🗑 工具已删除');render();}
+
+// import/export
+function exportConfig(){const blob=new Blob([JSON.stringify({tools:st.tools,urls:st.urls,favs:st.favs,opens:st.opens,recent:st.recent,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='工具中心配置_'+new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')+'.json';a.click();toast('✅ 配置已导出');}
+function importConfig(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!confirm(`导入将覆盖当前配置（${(d.tools||[]).length} 个工具），确认？`)){e.target.value='';return;}if(d.tools)st.tools=d.tools;if(d.urls)st.urls=d.urls;if(d.favs)st.favs=d.favs;if(d.opens)st.opens=d.opens;if(d.recent)st.recent=d.recent;persist();render();toast('✅ 配置已导入');}catch(err){toast('❌ 文件格式错误');}e.target.value='';};r.readAsText(file);}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function onOC(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('linkOverlay');closeModal('toolOverlay');}});
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+
+function renderWb(){
+  const tot=st.tools.length,on=st.tools.filter(t=>t.status==='online').length;
+  const lnk=st.tools.filter(t=>st.urls[t.id]).length,pd=st.tools.filter(t=>!st.urls[t.id]).length;
+  const fav=Object.keys(st.favs).length,op=Object.values(st.opens).reduce((a,b)=>a+b,0);
+  document.getElementById('wbTotal').textContent=tot;document.getElementById('wbOnline').textContent='已上线 '+on+' 个';
+  document.getElementById('wbLinked').textContent=lnk;document.getElementById('wbPending').textContent='待配置 '+pd+' 个';
+  document.getElementById('wbFav').textContent=fav;document.getElementById('wbOpened').textContent=op;
+  document.getElementById('ss-tot').textContent=tot;document.getElementById('ss-lnk').textContent=lnk;document.getElementById('ss-op').textContent=op;
+  document.getElementById('scnt-all').textContent=tot;
+  document.getElementById('scnt-lg').textContent=st.tools.filter(t=>t.project==='linggong').length;
+  document.getElementById('scnt-fx').textContent=st.tools.filter(t=>t.project==='fanxianyi').length;
+  document.getElementById('scnt-fav').textContent=fav;
+  document.getElementById('scnt-on').textContent=on;
+  document.getElementById('scnt-ts').textContent=st.tools.filter(t=>t.status==='testing').length;
+  document.getElementById('scnt-pd').textContent=st.tools.filter(t=>!st.urls[t.id]).length;
+  const wrap=document.getElementById('recentWrap');
+  const rec=st.recent.map(id=>st.tools.find(t=>t.id===id)).filter(Boolean).slice(0,5);
+  if(rec.length){
+    wrap.innerHTML=`<span class="wb-rlbl">最近使用</span><div class="rc-chips">${rec.map(t=>{const u=st.urls[t.id];return`<a class="rc" ${u?`href="${u}" target="_blank" onclick="recOpen('${u}','${t.id}')"`:''}><span class="rc-ico">${t.icon}</span>${t.name}</a>`;}).join('')}</div>`;
+  }else{
+    wrap.innerHTML='<span class="wb-rlbl">最近使用</span><div class="rc-chips"><span class="rc-empty">暂无记录，打开工具后将在此显示</span></div>';
+  }
+}
+
+function render(){
+  renderWb();
+  const filtered=st.tools.filter(t=>{
+    if(curF==='linggong'&&t.project!=='linggong')return false;
+    if(curF==='fanxianyi'&&t.project!=='fanxianyi')return false;
+    if(curF==='fav'&&!st.favs[t.id])return false;
+    if(curF==='online'&&t.status!=='online')return false;
+    if(curF==='testing'&&t.status!=='testing')return false;
+    if(curF==='pending'&&!st.urls[t.id])return false;
+    if(!curKw)return true;
+    return t.name.toLowerCase().includes(curKw)||t.desc.toLowerCase().includes(curKw)||(t.features||[]).some(f=>f.toLowerCase().includes(curKw));
+  });
+  document.getElementById('toolCount').textContent=filtered.length+' 个';
+  if(!filtered.length){document.getElementById('board').innerHTML=`<div class="empty">🔍 没有找到${curKw?`"${curKw}"相关的`:''}工具${curF==='fav'?' · 点击卡片上 ☆ 收藏':''}</div>`;return;}
+  let html='';
+  ['linggong','fanxianyi'].forEach(pid=>{
+    const proj=PJ[pid];const pt=filtered.filter(t=>t.project===pid);if(!pt.length)return;
+    html+=`<div class="project"><div class="proj-bar"><div class="proj-dot" style="background:${proj.color}"></div><span class="proj-name" style="color:${proj.color}">${proj.label}</span><span class="proj-desc">${proj.desc}</span><span class="proj-cnt">${pt.length} 个工具</span></div>`;
+    const used=new Set(pt.map(t=>t.cat));
+    proj.cats.filter(c=>used.has(c)).forEach(cat=>{
+      const ct=pt.filter(t=>t.cat===cat);
+      html+=`<div class="sub-cat"><div class="sub-cat-lbl">${cat}</div><div class="tool-grid">`;
+      ct.forEach(t=>{html+=card(t,proj);});
+      html+=`</div></div>`;
+    });
+    const oth=pt.filter(t=>!proj.cats.includes(t.cat));
+    if(oth.length){html+=`<div class="sub-cat"><div class="sub-cat-lbl">其他</div><div class="tool-grid">`;oth.forEach(t=>{html+=card(t,proj);});html+=`</div></div>`;}
+    html+=`</div>`;
+  });
+  document.getElementById('board').innerHTML=html;
+}
+
+function card(t,proj){
+  const url=st.urls[t.id]||'',sm=SM[t.status]||SM.pending,fav=!!st.favs[t.id],oc=st.opens[t.id]||0;
+  const feats=(t.features||[]).map(f=>`<div class="feat"><div class="feat-b" style="background:${proj.color}"></div><span>${hl(f,curKw)}</span></div>`).join('');
+  const obtn=url
+    ?`<a class="cbtn" style="border-color:${proj.color};color:${proj.color};background:transparent" href="${url}" target="_blank" onclick="recOpen('${url}','${t.id}')" onmouseover="this.style.background='${proj.color}';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='${proj.color}'">打开 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
+    :`<span class="cbtn cbtn-off">未配置链接</span>`;
+  return `<div class="tcard">
+    <div class="tcard-tr">
+      <div class="stag ${sm.c}"><div class="sd"></div>${sm.l}</div>
+      <button class="fav-btn ${fav?'starred':''}" onclick="toggleFav('${t.id}',event)">${fav?'⭐':'☆'}</button>
+    </div>
+    <div class="tcard-stripe" style="background:${proj.color}"></div>
+    <div class="tc-top">
+      <div class="tc-ico">${t.icon||'🔧'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="tc-name">${hl(t.name,curKw)}</div>
+        <div class="tc-sub">${t.sub||''}</div>
+        ${oc>0?`<div class="tc-meta"><span class="tc-mpill">打开 ${oc} 次</span></div>`:''}
+      </div>
+    </div>
+    <div class="tc-body">
+      <div class="tc-desc">${hl(t.desc||'',curKw)}</div>
+      <div class="feats">${feats}</div>
+    </div>
+    <div class="url-row">
+      <svg class="url-ico" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      ${url?`<span class="url-txt live" onclick="recOpen('${url}','${t.id}')" title="${url}">${url}</span>`:`<span class="url-txt">未配置 — 点击右侧图标添加</span>`}
+      <button class="url-edit" onclick="openLm('${t.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    </div>
+    <div class="tc-foot">
+      <div class="fl">
+        <span class="ftag t-${t.tag}">${t.tag}</span>
+        <span class="fmt"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>${t.format}</span>
+      </div>
+      <div class="fr">
+        <button class="cbtn cbtn-edit" onclick="openEditModal('${t.id}')"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>编辑</button>
+        ${obtn}
+      </div>
+    </div>
+  </div>`;
+}
+render();
+</script>
+</body>
+</html>
