@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>正晔云 - 劳务管理系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f6fa; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f0f0f0; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  input, select, textarea, button { font-family: inherit; }
+  table { border-collapse: collapse; }
+  .nav-item:hover { background: rgba(255,255,255,0.08) !important; }
+  .child-item:hover { background: rgba(255,255,255,0.06) !important; }
+  .action-link:hover { text-decoration: underline; }
+  .card-hover:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  tr:hover td { background: #fafafa; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+const ACCENT = "#c0392b";
+const SIDEBAR = "#2c2c2c";
+
+// ── Primitives ─────────────────────────────────────────────────────────────
+const s = {
+  card: { background:"#fff", borderRadius:6, border:"1px solid #eee" },
+  th: { padding:"10px 12px", textAlign:"left", color:"#888", fontWeight:500, fontSize:13, borderBottom:"1px solid #eee", whiteSpace:"nowrap", background:"#fafafa" },
+  td: { padding:"10px 12px", fontSize:13, color:"#333", borderBottom:"1px solid #f5f5f5", verticalAlign:"middle" },
+  input: { padding:"5px 10px", border:"1px solid #ddd", borderRadius:4, fontSize:13, outline:"none", width:"100%" },
+  select: { padding:"5px 10px", border:"1px solid #ddd", borderRadius:4, fontSize:13, outline:"none", background:"#fff" },
+  btn: { background:ACCENT, color:"#fff", border:"none", borderRadius:4, padding:"6px 18px", cursor:"pointer", fontSize:13, whiteSpace:"nowrap" },
+  outBtn: { background:"#fff", color:ACCENT, border:`1px solid ${ACCENT}`, borderRadius:4, padding:"5px 16px", cursor:"pointer", fontSize:13, whiteSpace:"nowrap" },
+  grayBtn: { background:"#fff", color:"#666", border:"1px solid #ddd", borderRadius:4, padding:"5px 16px", cursor:"pointer", fontSize:13 },
+};
+
+function Tag({ v }) {
+  const map = {
+    "已发布":["#e8f4ff","#1890ff"], "草稿":["#f5f5f5","#999"],
+    "已签约":["#f0fff4","#52c41a"], "未交付":["#fff7e6","#fa8c16"],
+    "已交付":["#f0fff4","#1890ff"], "审核通过":["#f0fff4","#52c41a"],
+    "待提交":["#fff7e6","#fa8c16"], "已发放":["#f0fff4","#52c41a"],
+    "充值成功":["#f0fff4","#52c41a"], "挂起":["#f5f5f5","#999"],
+  };
+  const [bg,color] = map[v]||["#f5f5f5","#666"];
+  return <span style={{background:bg,color,padding:"2px 10px",borderRadius:3,fontSize:12,whiteSpace:"nowrap"}}>{v}</span>;
+}
+function A({ label, onClick }) {
+  return <span className="action-link" onClick={onClick} style={{color:ACCENT,cursor:"pointer",fontSize:12,marginRight:8}}>{label}</span>;
+}
+function Btn({ children, onClick, style }) {
+  return <button onClick={onClick} style={{...s.btn,...style}}>{children}</button>;
+}
+function OBtn({ children, onClick }) {
+  return <button onClick={onClick} style={s.outBtn}>{children}</button>;
+}
+function GBtn({ children, onClick }) {
+  return <button onClick={onClick} style={s.grayBtn}>{children}</button>;
+}
+function FInput({ label, placeholder, width=160 }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
+      {label&&<span style={{color:"#666",fontSize:13}}>{label}</span>}
+      <input placeholder={placeholder} style={{...s.input,width}} />
+    </div>
+  );
+}
+function FSelect({ label, opts=[], width=130 }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      {label&&<span style={{color:"#666",fontSize:13}}>{label}</span>}
+      <select style={{...s.select,width}}>
+        {opts.map(o=><option key={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+function FDate({ label }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
+      {label&&<span style={{color:"#666",fontSize:13}}>{label}</span>}
+      <span style={{color:"#bbb",fontSize:12,border:"1px solid #ddd",padding:"5px 6px",borderRadius:4}}>📅</span>
+      <input type="date" style={{...s.input,width:130}} />
+      <span style={{color:"#999"}}>至</span>
+      <input type="date" style={{...s.input,width:130}} />
+    </div>
+  );
+}
+function SearchBox({ children }) {
+  return (
+    <div style={{...s.card,margin:"14px 20px 0",padding:"14px 18px"}}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:"10px 18px",alignItems:"center"}}>
+        {children}
+        <Btn>查询</Btn>
+      </div>
+    </div>
+  );
+}
+function TH({ cols }) {
+  return <thead><tr>{cols.map((c,i)=><th key={i} style={s.th}>{c}</th>)}</tr></thead>;
+}
+function Pager({ total }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 16px",fontSize:13,color:"#666",borderTop:"1px solid #f0f0f0"}}>
+      <span>共{total}条</span>
+      <select style={{...s.select,width:80,fontSize:12}}><option>10条/页</option><option>20条/页</option></select>
+      <span style={{cursor:"pointer",padding:"2px 6px",border:"1px solid #ddd",borderRadius:3}}>‹</span>
+      <span style={{background:ACCENT,color:"#fff",borderRadius:3,padding:"2px 8px",fontSize:12}}>1</span>
+      <span style={{cursor:"pointer",padding:"2px 6px"}}>2</span>
+      <span style={{cursor:"pointer",padding:"2px 6px"}}>3</span>
+      <span>…</span>
+      <span style={{cursor:"pointer",padding:"2px 6px",border:"1px solid #ddd",borderRadius:3}}>›</span>
+      <span style={{marginLeft:8}}>前往</span>
+      <input defaultValue="1" style={{width:36,padding:"2px 4px",border:"1px solid #ddd",borderRadius:3,textAlign:"center",fontSize:12,outline:"none"}} />
+      <span>页</span>
+    </div>
+  );
+}
+function PageHd({ title, crumb, onBack, right }) {
+  return (
+    <div style={{padding:"16px 20px 0",display:"flex",alignItems:"center",gap:8}}>
+      {onBack&&<span onClick={onBack} style={{color:ACCENT,cursor:"pointer",fontSize:13}}>← 返回</span>}
+      {onBack&&<span style={{color:"#ccc",margin:"0 4px"}}>|</span>}
+      <span style={{fontSize:15,fontWeight:600,color:"#222"}}>{title}</span>
+      {crumb&&<span style={{color:"#999",fontSize:13}}>/ {crumb}</span>}
+      <div style={{flex:1}} />
+      {right}
+    </div>
+  );
+}
+function Modal({ title, onClose, children }) {
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999}}>
+      <div style={{background:"#fff",borderRadius:8,width:440,padding:"24px 32px",position:"relative"}}>
+        <div style={{fontSize:16,fontWeight:600,marginBottom:24}}>{title}</div>
+        <span onClick={onClose} style={{position:"absolute",top:14,right:18,cursor:"pointer",color:"#aaa",fontSize:22,lineHeight:1}}>×</span>
+        {children}
+      </div>
+    </div>
+  );
+}
+function TabBar({ tabs, active, onChange }) {
+  return (
+    <div style={{display:"flex",borderBottom:"1px solid #f0f0f0"}}>
+      {tabs.map(t=>(
+        <div key={t} onClick={()=>onChange(t)} style={{padding:"11px 20px",cursor:"pointer",fontSize:13,color:active===t?ACCENT:"#666",borderBottom:active===t?`2px solid ${ACCENT}`:"2px solid transparent",userSelect:"none"}}>{t}</div>
+      ))}
+    </div>
+  );
+}
+function EmptyRow({ cols }) {
+  return <tr><td colSpan={cols} style={{textAlign:"center",padding:"52px 0",color:"#ccc",fontSize:14}}>暂无数据</td></tr>;
+}
+
+// ── Layout ─────────────────────────────────────────────────────────────────
+function Layout({ page, setPage, children }) {
+  const groups = {
+    "task-sign": ["sign-talent","task-review","delivery-review"],
+    finance: ["invoice","recharge","refund","declare"],
+    account: ["msg-center","account-info","api-config"],
+  };
+  const init = {};
+  Object.entries(groups).forEach(([k,v])=>{ init[k]=v.includes(page); });
+  const [open, setOpen] = useState(init);
+
+  const toggle = k => setOpen(o=>({...o,[k]:!o[k]}));
+  const isActive = k => page===k;
+  const inGroup = k => groups[k]?.includes(page);
+
+  const menu = [
+    {k:"home",      label:"首页",     icon:"🏠"},
+    {k:"task-publish",label:"任务发布",icon:"📤"},
+    {k:"task-sign", label:"任务签约",  icon:"📋", children:[
+      {k:"sign-talent",label:"签约人才"},
+      {k:"task-review",label:"任务审核"},
+      {k:"delivery-review",label:"交付物审核"},
+    ]},
+    {k:"task-settle",label:"任务结算", icon:"💰"},
+    {k:"task-delivery",label:"任务交付",icon:"📦"},
+    {k:"finance",   label:"财务管理",  icon:"📊", children:[
+      {k:"invoice",  label:"在线开票"},
+      {k:"recharge", label:"账户充值"},
+      {k:"refund",   label:"退款明细"},
+      {k:"declare",  label:"申报记录"},
+    ]},
+    {k:"account",   label:"账户管理",  icon:"👤", children:[
+      {k:"msg-center",  label:"消息中心"},
+      {k:"account-info",label:"账户信息"},
+      {k:"api-config",  label:"API配置"},
+    ]},
+  ];
+
+  return (
+    <div style={{display:"flex",height:"100vh",overflow:"hidden"}}>
+      {/* Sidebar */}
+      <div style={{width:182,background:SIDEBAR,display:"flex",flexDirection:"column",flexShrink:0,overflowY:"auto"}}>
+        <div style={{padding:"14px 16px",borderBottom:"1px solid #3d3d3d",display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+          <div style={{width:30,height:30,background:ACCENT,borderRadius:5,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:13,flexShrink:0}}>正</div>
+          <span style={{color:"#fff",fontSize:15,fontWeight:700,letterSpacing:1}}>正晔云</span>
+        </div>
+        <nav style={{flex:1,paddingTop:6}}>
+          {menu.map(item=>(
+            <div key={item.k}>
+              <div className="nav-item" onClick={()=>{ if(item.children){toggle(item.k); if(!open[item.k])setPage(item.children[0].k);} else setPage(item.k); }}
+                style={{padding:"10px 16px",display:"flex",alignItems:"center",gap:9,cursor:"pointer",
+                  background:isActive(item.k)||inGroup(item.k)?ACCENT:"transparent",
+                  color:isActive(item.k)||inGroup(item.k)?"#fff":"#bbb",
+                  borderLeft:isActive(item.k)||inGroup(item.k)?"3px solid #e74c3c":"3px solid transparent",
+                  transition:"all 0.15s",userSelect:"none"}}>
+                <span style={{fontSize:14}}>{item.icon}</span>
+                <span style={{flex:1,fontSize:13}}>{item.label}</span>
+                {item.children&&<span style={{fontSize:10,opacity:0.7}}>{open[item.k]?"▲":"▼"}</span>}
+              </div>
+              {item.children&&open[item.k]&&item.children.map(c=>(
+                <div key={c.k} className="child-item" onClick={()=>setPage(c.k)}
+                  style={{padding:"8px 16px 8px 44px",cursor:"pointer",fontSize:13,
+                    background:isActive(c.k)?"#3d1212":"transparent",
+                    color:isActive(c.k)?"#fff":"#999",
+                    borderLeft:isActive(c.k)?"3px solid #e74c3c":"3px solid transparent",
+                    transition:"all 0.15s",userSelect:"none"}}>
+                  {c.label}
+                </div>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* Main */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {/* Topbar */}
+        <div style={{height:48,background:"#fff",borderBottom:"1px solid #eee",display:"flex",alignItems:"center",padding:"0 20px",gap:10,flexShrink:0}}>
+          <span style={{color:"#999",fontSize:18,cursor:"pointer"}}>☰</span>
+          <div style={{flex:1}}/>
+          <span style={{fontSize:12,color:"#888"}}>当前商户：</span>
+          <div style={{display:"flex",alignItems:"center",gap:4,background:"#f7f7f7",padding:"4px 10px",borderRadius:4,fontSize:12,color:"#333",border:"1px solid #eee"}}>
+            广州聚客网络科技有限公司 <span style={{color:"#bbb",fontSize:10}}>▼</span>
+          </div>
+          <span style={{fontSize:12,color:"#888"}}>当前服务公司：</span>
+          <div style={{display:"flex",alignItems:"center",gap:4,background:"#f7f7f7",padding:"4px 10px",borderRadius:4,fontSize:12,color:"#333",border:"1px solid #eee"}}>
+            丽水正昀数字科技有限公司 <span style={{color:"#bbb",fontSize:10}}>▼</span>
+          </div>
+          <button style={s.btn}>切换公司</button>
+          <span style={{fontSize:16,color:"#888",cursor:"pointer"}}>✉</span>
+          <span style={{fontSize:12,color:"#666"}}>广州聚客网络科技有限公司</span>
+          <span style={{color:"#bbb",fontSize:10}}>▼</span>
+        </div>
+        {/* Content */}
+        <div style={{flex:1,overflowY:"auto"}}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Pages
+// ══════════════════════════════════════════════════════════════════
+
+function HomePage({ setPage }) {
+  return (
+    <div style={{padding:20}}>
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:14,color:"#666",marginBottom:4}}>欢迎登录正晔云</div>
+        <div style={{fontSize:20,fontWeight:700,color:"#222",marginBottom:6}}>广州聚客网络科技有限公司</div>
+        <div style={{fontSize:12,color:"#aaa"}}>登录时间：2026-05-09 15:01:00</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:16}}>
+        {[
+          {label:"账户充值",sub:"账户充值",icon:"💳",bg:"#fff5ec",page:"recharge"},
+          {label:"任务结算",sub:"任务结算",icon:"💬",bg:"#eff6ff",page:"task-settle"},
+          {label:"申请开票",sub:"申请开票",icon:"🖨️",bg:"#edfdf8",page:"invoice"},
+          {label:"5.00%",sub:"服务费率",icon:"🧮",bg:"#f3efff",page:null},
+        ].map((c,i)=>(
+          <div key={i} className="card-hover" onClick={()=>c.page&&setPage(c.page)}
+            style={{...s.card,padding:"20px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:c.page?"pointer":"default",transition:"box-shadow 0.2s"}}>
+            <div>
+              <div style={{fontSize:i===3?22:16,fontWeight:i===3?800:600,color:i===3?"#7c4dff":"#222",marginBottom:4}}>{c.label}</div>
+              <div style={{fontSize:12,color:"#aaa"}}>{c.sub}</div>
+            </div>
+            <div style={{width:52,height:52,background:c.bg,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{c.icon}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{...s.card,padding:"22px 24px"}}>
+        <div style={{fontSize:14,fontWeight:600,color:"#333",marginBottom:16}}>金额数据</div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:12,color:"#888",marginBottom:6}}>当前账户金额（元）</div>
+          <div style={{fontSize:34,fontWeight:800,color:ACCENT}}>30525.22</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",paddingTop:16,borderTop:"1px solid #f5f5f5"}}>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:"#666",marginBottom:5}}>
+              <span style={{width:8,height:8,borderRadius:"50%",background:"#52c41a",display:"inline-block"}}/>
+              可用余额（元）<span style={{color:"#ccc",cursor:"pointer"}}>❓</span>
+            </div>
+            <div style={{fontSize:18,fontWeight:600,color:"#333"}}>30525.22</div>
+          </div>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:"#666",marginBottom:5}}>
+              <span style={{width:8,height:8,borderRadius:"50%",background:"#fa8c16",display:"inline-block"}}/>
+              不可用余额（元）<span style={{color:"#ccc",cursor:"pointer"}}>❓</span>
+            </div>
+            <div style={{fontSize:18,fontWeight:600,color:"#333"}}>0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskPublishPage({ setPage }) {
+  const rows = [
+    {name:"外包运维服务",code:"138",type:"现代服务-其他现代服务",status:"已发布",count:"不限",created:"2026-01-08 11:50:29"},
+    {name:"芽米推广任务",code:"127",type:"市场推广服务-市场推广服务",status:"已发布",count:"不限",created:"2025-12-13 22:14:33"},
+    {name:"线下通讯网络推广",code:"124",type:"市场推广服务-市场推广服务",status:"已发布",count:"不限",created:"2025-12-11 17:16:53"},
+  ];
+  return (
+    <div>
+      <PageHd title="任务发布" />
+      <SearchBox>
+        <FInput label="任务编号：" placeholder="请输入编号" width={140} />
+        <FInput label="任务名称：" placeholder="请输入名称" width={140} />
+        <FSelect label="任务状态：" opts={["请选择状态","已发布","草稿","已关闭"]} />
+        <FDate label="发布时间：" />
+      </SearchBox>
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <div style={{padding:"12px 16px",borderBottom:"1px solid #f5f5f5"}}>
+          <Btn onClick={()=>setPage("task-new")}>+ 新建任务</Btn>
+        </div>
+        <table style={{width:"100%"}}>
+          <TH cols={["任务名称","任务编码","任务类型","任务状态","任务人数","创建时间","审核备注","操作"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}><td style={s.td}>{r.name}</td><td style={s.td}>{r.code}</td><td style={s.td}>{r.type}</td>
+              <td style={s.td}><Tag v={r.status}/></td><td style={s.td}>{r.count}</td><td style={s.td}>{r.created}</td><td style={s.td}/>
+              <td style={s.td}><A label="生成邀请码"/><A label="签约信息"/><A label="详情"/><br/><A label="关闭"/></td></tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager total={3} />
+      </div>
+    </div>
+  );
+}
+
+function TaskNewPage({ setPage }) {
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type="success") => {
+    setToast({msg, type});
+    setTimeout(()=>setToast(null), 2500);
+  };
+  const handleSaveDraft = () => showToast("草稿保存成功！", "success");
+  const handleSubmit = () => showToast("任务已提交审核，请等待平台审核。", "success");
+  const row = {display:"flex",alignItems:"flex-start",gap:12,marginBottom:22};
+  const lbl = {width:100,textAlign:"right",color:"#555",fontSize:13,paddingTop:7,flexShrink:0};
+  const req = <span style={{color:ACCENT}}>* </span>;
+  return (
+    <div>
+      <PageHd title="任务发布" crumb="新建任务" onBack={()=>setPage("task-publish")} />
+      <div style={{...s.card,margin:"14px 20px 80px",padding:"28px 40px"}}>
+        <div style={row}>
+          <span style={lbl}>{req}任务名称：</span>
+          <input placeholder="请输入" style={{...s.input,width:340}} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}任务类型：</span>
+          <div style={{display:"flex",gap:8}}>
+            <select style={{...s.select,width:158,color:"#aaa"}}><option>请选择一级分类</option><option>市场推广服务</option><option>现代服务</option></select>
+            <span style={{color:"#aaa",alignSelf:"center"}}>-</span>
+            <select style={{...s.select,width:158,color:"#aaa"}}><option>请选择二级分类</option><option>市场推广服务</option><option>其他现代服务</option></select>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}结算方式：</span>
+          <div style={{display:"flex",gap:18,paddingTop:7}}>
+            {["日结","周结","月结","次结","项目结","小时结"].map(m=>(
+              <label key={m} style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:13}}>
+                <input type="radio" name="settle" style={{accentColor:ACCENT}} />{m}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}任务佣金：</span>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <input placeholder="最低金额" style={{...s.input,width:130}} />
+            <span style={{color:"#aaa"}}>-</span>
+            <input placeholder="最高金额" style={{...s.input,width:130}} />
+            <span style={{fontSize:12,color:"#888"}}>单位：元，若填写相同金额，则展示固定金额</span>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}任务地点类型：</span>
+          <div style={{display:"flex",gap:18,paddingTop:7}}>
+            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:13}}><input type="radio" name="loc" style={{accentColor:ACCENT}}/>线上</label>
+            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:13,color:ACCENT}}><input type="radio" name="loc" defaultChecked style={{accentColor:ACCENT}}/>线下</label>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}任务所在地：</span>
+          <input placeholder="请输入" style={{...s.input,width:340}} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}任务要求：</span>
+          <div style={{position:"relative"}}>
+            <textarea placeholder="请输入" style={{width:340,height:100,padding:"8px 10px",border:"1px solid #ddd",borderRadius:4,fontSize:13,outline:"none",resize:"vertical",fontFamily:"inherit"}}/>
+            <span style={{position:"absolute",right:-52,top:4,color:ACCENT,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>参考示例</span>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}人员要求：</span>
+          <div style={{position:"relative"}}>
+            <textarea placeholder="请输入" style={{width:340,height:100,padding:"8px 10px",border:"1px solid #ddd",borderRadius:4,fontSize:13,outline:"none",resize:"vertical",fontFamily:"inherit"}}/>
+            <span style={{position:"absolute",right:-52,top:4,color:ACCENT,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>参考示例</span>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}任务人数：</span>
+          <div style={{display:"flex",gap:18,paddingTop:7}}>
+            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:13,color:ACCENT}}><input type="radio" name="cnt" defaultChecked style={{accentColor:ACCENT}}/>不限</label>
+            <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:13}}><input type="radio" name="cnt" style={{accentColor:ACCENT}}/>限定人数</label>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}招聘期限：</span>
+          <select style={{...s.select,width:200}}><option>长期有效</option><option>1个月</option><option>3个月</option><option>6个月</option></select>
+        </div>
+      </div>
+      <div style={{position:"fixed",bottom:0,left:182,right:0,background:"#fff",borderTop:"1px solid #eee",padding:"12px 40px",display:"flex",gap:12}}>
+        <Btn onClick={handleSaveDraft}>保存草稿</Btn>
+        <Btn onClick={handleSubmit}>保存并提交审核</Btn>
+        <GBtn onClick={()=>setPage("task-publish")}>返回</GBtn>
+      </div>
+      {toast&&(
+        <div style={{position:"fixed",top:64,left:"50%",transform:"translateX(-50%)",zIndex:2000,
+          background:toast.type==="success"?"#52c41a":ACCENT,color:"#fff",
+          padding:"10px 24px",borderRadius:6,fontSize:13,boxShadow:"0 4px 16px rgba(0,0,0,0.15)",
+          display:"flex",alignItems:"center",gap:8,whiteSpace:"nowrap"}}>
+          <span>{toast.type==="success"?"✓":"✕"}</span>{toast.msg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SignTalentPage({ setPage }) {
+  const rows = [
+    {id:"720881",name:"覃思娴",phone:"153****5167",idcard:"4525**********3760",bank:"6222**********7805",sign:"已签约",del:"已交付",created:"2026-05-07 14:06:12"},
+    {id:"720847",name:"黄婷",phone:"155****5537",idcard:"4521**********152X",bank:"6236**********6897",sign:"已签约",del:"已交付",created:"2026-05-06 14:06:56"},
+    {id:"720842",name:"郭声昭",phone:"188****7728",idcard:"4414**********4058",bank:"6217**********5502",sign:"已签约",del:"未交付",created:"2026-05-06 13:05:46"},
+    {id:"720793",name:"叶建铿",phone:"189****0098",idcard:"4401**********0019",bank:"6214********7635",sign:"已签约",del:"未交付",created:"2026-05-05 12:55:54"},
+    {id:"720791",name:"徐秋何",phone:"153****8621",idcard:"4408**********0815",bank:"6212**********0081",sign:"已签约",del:"已交付",created:"2026-05-05 09:19:04"},
+    {id:"720788",name:"倪新豪",phone:"189****8881",idcard:"4401**********1576",bank:"6214*******5798",sign:"已签约",del:"未交付",created:"2026-05-04 22:15:32"},
+  ];
+  return (
+    <div>
+      <PageHd title="任务签约 / 签约人才" />
+      <SearchBox>
+        <FInput label="人才姓名" placeholder="请输入人才姓名" width={140} />
+        <FInput label="手机号码" placeholder="请输入手机号码" width={140} />
+        <FSelect label="签约状态" opts={["全部","已签约","未签约"]} />
+        <FDate label="创建时间" />
+      </SearchBox>
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <div style={{padding:"10px 16px",borderBottom:"1px solid #f5f5f5"}}>
+          <OBtn>导出</OBtn>
+        </div>
+        <table style={{width:"100%"}}>
+          <TH cols={["人才编号","人才姓名","手机号码","证件号码","银行账号","签约状态","交付状态","创建时间","操作"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={s.td}>{r.id}</td><td style={s.td}>{r.name}</td><td style={s.td}>{r.phone}</td>
+                <td style={{...s.td,color:"#999"}}>{r.idcard}</td><td style={{...s.td,color:"#999"}}>{r.bank}</td>
+                <td style={s.td}><Tag v={r.sign}/></td><td style={s.td}><Tag v={r.del}/></td>
+                <td style={s.td}>{r.created}</td><td style={s.td}><A label="人才详情" onClick={()=>setPage("talent-detail-"+r.id)}/></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager total={634} />
+      </div>
+    </div>
+  );
+}
+
+function TaskReviewPage() {
+  const rows = [
+    {task:"线下通讯网络推广",name:"张耀阳",gender:"男",birth:"2002年04月26日",idcard:"4508**********801X",phone:"18777599217",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"赖鑫",gender:"男",birth:"1994年02月11日",idcard:"3607**********0032",phone:"17818567703",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"郭明侦",gender:"男",birth:"1994年12月10日",idcard:"4452**********3118",phone:"13691941931",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"刘林",gender:"男",birth:"1987年02月28日",idcard:"5002**********4838",phone:"17783037345",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"黄小霞",gender:"女",birth:"1974年04月17日",idcard:"4407**********2427",phone:"13660192780",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"梁泳仪",gender:"女",birth:"1986年03月03日",idcard:"4412**********4826",phone:"13760085501",status:"审核通过"},
+  ];
+  return (
+    <div>
+      <PageHd title="任务审核" />
+      <SearchBox>
+        <FInput label="姓名：" placeholder="请输入姓名" />
+        <FInput label="身份证号：" placeholder="请输入身份证号" width={160} />
+        <FInput label="手机号：" placeholder="请输入手机号" width={140} />
+        <FSelect label="状态：" opts={["选择状态","审核通过","审核不通过","待审核"]} />
+      </SearchBox>
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <div style={{padding:"10px 16px",display:"flex",gap:8,borderBottom:"1px solid #f5f5f5"}}>
+          <Btn>通过</Btn>
+          <button style={{background:"#fdf2f2",color:ACCENT,border:`1px solid ${ACCENT}`,borderRadius:4,padding:"5px 16px",cursor:"pointer",fontSize:13}}>不通过</button>
+        </div>
+        <table style={{width:"100%"}}>
+          <TH cols={["☐","任务名称","姓名","性别","出生日期","身份证号","手机号","状态","不通过原因","操作"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={s.td}><input type="checkbox" style={{accentColor:ACCENT}}/></td>
+                <td style={s.td}>{r.task}</td><td style={s.td}>{r.name}</td><td style={s.td}>{r.gender}</td>
+                <td style={s.td}>{r.birth}</td><td style={{...s.td,color:"#999"}}>{r.idcard}</td>
+                <td style={s.td}>{r.phone}</td><td style={{...s.td,color:"#52c41a"}}>{r.status}</td>
+                <td style={s.td}/><td style={s.td}/>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager total={635} />
+      </div>
+    </div>
+  );
+}
+
+function DeliveryReviewPage() {
+  const rows = [
+    {task:"线下通讯网络推广",name:"覃思娴",idcard:"4525**********3760",phone:"15360065167",desc:"运营商业务推广_20260508_为移动运营商拉新",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"黄婷",idcard:"4521**********152X",phone:"15507555537",desc:"负责配送与二卡销售业务",status:"审核通过"},
+    {task:"线下通讯网络推广",name:"叶建铿",idcard:"4401**********0019",phone:"18923450098",desc:"运营商业务推广_20260508_套餐销售",status:"审核通过"},
+  ];
+  return (
+    <div>
+      <PageHd title="交付物审核" />
+      <SearchBox>
+        <FInput label="姓名：" placeholder="请输入姓名" />
+        <FInput label="身份证号：" placeholder="请输入身份证号" width={160} />
+        <FInput label="手机号：" placeholder="请输入手机号" width={140} />
+        <FSelect label="状态：" opts={["选择状态","审核通过","审核不通过","待审核"]} />
+      </SearchBox>
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <div style={{padding:"10px 16px",display:"flex",gap:8,alignItems:"center",borderBottom:"1px solid #f5f5f5"}}>
+          <Btn>通过</Btn>
+          <button style={{background:"#fdf2f2",color:ACCENT,border:`1px solid ${ACCENT}`,borderRadius:4,padding:"5px 16px",cursor:"pointer",fontSize:13}}>不通过</button>
+          <div style={{flex:1}}/>
+          <OBtn>导出</OBtn>
+        </div>
+        <table style={{width:"100%"}}>
+          <TH cols={["☐","任务名称","姓名","身份证号","手机号","任务描述","任务凭证","状态","不通过原因","操作"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={s.td}><input type="checkbox" style={{accentColor:ACCENT}}/></td>
+                <td style={s.td}>{r.task}</td><td style={s.td}>{r.name}</td>
+                <td style={{...s.td,color:"#999",fontSize:12}}>{r.idcard}</td>
+                <td style={s.td}>{r.phone}</td>
+                <td style={{...s.td,maxWidth:160,fontSize:12}}>{r.desc}</td>
+                <td style={s.td}><div style={{width:48,height:38,background:"#f0f0f0",borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🖼</div></td>
+                <td style={{...s.td,color:"#52c41a"}}>{r.status}</td>
+                <td style={s.td}/><td style={s.td}/>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager total={574} />
+      </div>
+    </div>
+  );
+}
+
+function TaskSettlePage({ setPage }) {
+  const [tab, setTab] = useState("发放明细");
+  const rows = [
+    {order:"983175189464625152",batch:"10866",status:"已发放",amount:170,tax:0,vat:1.68,extra:0.09,after:170,name:"李真真",phone:"15322263661",idcard:"411381198705262237",bank:"62149212039539928",ot:"2026-05-09 15:12:12",pt:"2026-05-09 15:12:30"},
+    {order:"983175065149644800",batch:"10865",status:"已发放",amount:240,tax:0,vat:2.38,extra:0.11,after:240,name:"彭叶明",phone:"13922279393",idcard:"430224198310049581X",bank:"6222083602014944281",ot:"2026-05-09 15:11:43",pt:"2026-05-09 15:12:00"},
+    {order:"982900586683158528",batch:"10858",status:"已发放",amount:1830,tax:0,vat:18.12,extra:0.91,after:1830,name:"甘茂彬",phone:"13066333458",idcard:"441424198710215770",bank:"622848008849434875",ot:"2026-05-08 21:01:02",pt:"2026-05-08 21:01:20"},
+    {order:"982900588819311064",batch:"10859",status:"已发放",amount:920,tax:0,vat:9.11,extra:0.46,after:920,name:"王静",phone:"15992300709",idcard:"522325200208260834",bank:"622203120301483095",ot:"2026-05-08 21:01:02",pt:"2026-05-08 21:01:21"},
+  ];
+  const batches = [
+    {id:"10866",total:170,success:170,fail:0,cancel:0,time:"2026-05-09 15:12:12",status:"待提交"},
+    {id:"10865",total:240,success:240,fail:0,cancel:0,time:"2026-05-09 15:11:43",status:"待提交"},
+    {id:"10858",total:1830,success:1830,fail:0,cancel:0,time:"2026-05-08 21:01:02",status:"待提交"},
+  ];
+  return (
+    <div>
+      <PageHd title="任务结算" right={<Btn onClick={()=>setPage("task-settle-batch")}>批量结算</Btn>} />
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <TabBar tabs={["发放明细","结算批次"]} active={tab} onChange={setTab} />
+        {tab==="发放明细"&&<>
+          <div style={{padding:"12px 16px",display:"flex",flexWrap:"wrap",gap:"8px 14px",borderBottom:"1px solid #f5f5f5",alignItems:"center"}}>
+            <FInput label="订单号：" placeholder="请输入订单号" width={140} />
+            <FInput label="批次号：" placeholder="请输入批次号" width={120} />
+            <FSelect label="订单状态：" opts={["全部","已发放","处理中","失败"]} width={100} />
+            <FInput label="姓名：" placeholder="请输入姓名" width={110} />
+            <FInput label="身份证号：" placeholder="请输入身份证号" width={150} />
+            <FDate label="订单时间：" />
+            <FDate label="发放时间：" />
+            <Btn>查询</Btn>
+            <OBtn>导出</OBtn>
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",minWidth:1100}}>
+              <TH cols={["订单号","批次号","订单状态","结算金额","个人所得税","增值税","附加税","税后金额","收款人","手机号","身份证号","银行账户","订单时间","发放时间","操作"]} />
+              <tbody>
+                {rows.map((r,i)=>(
+                  <tr key={i}>
+                    <td style={{...s.td,fontSize:11,color:"#888",whiteSpace:"nowrap"}}>{r.order}</td>
+                    <td style={s.td}>{r.batch}</td>
+                    <td style={s.td}><Tag v={r.status}/></td>
+                    <td style={s.td}>{r.amount}</td><td style={s.td}>{r.tax}</td>
+                    <td style={s.td}>{r.vat}</td><td style={s.td}>{r.extra}</td>
+                    <td style={s.td}>{r.after}</td><td style={s.td}>{r.name}</td>
+                    <td style={s.td}>{r.phone}</td>
+                    <td style={{...s.td,fontSize:11,color:"#999"}}>{r.idcard}</td>
+                    <td style={{...s.td,fontSize:11,color:"#999"}}>{r.bank}</td>
+                    <td style={{...s.td,fontSize:11,whiteSpace:"nowrap"}}>{r.ot}</td>
+                    <td style={{...s.td,fontSize:11,whiteSpace:"nowrap"}}>{r.pt}</td>
+                    <td style={s.td}><button style={{background:"#52c41a",color:"#fff",border:"none",borderRadius:3,padding:"3px 9px",fontSize:12,cursor:"pointer"}}>查看回单</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pager total={328} />
+        </>}
+        {tab==="结算批次"&&<>
+          <div style={{padding:"12px 16px",display:"flex",flexWrap:"wrap",gap:"8px 14px",borderBottom:"1px solid #f5f5f5",alignItems:"center"}}>
+            <FInput label="批次号：" placeholder="请输入批次号" width={140} />
+            <FDate label="结算时间：" />
+            <Btn>查询</Btn><OBtn>导出</OBtn>
+          </div>
+          <table style={{width:"100%"}}>
+            <TH cols={["结算批次ID","总金额","成功金额","失败金额","取消金额","结算时间","交付状态","操作"]} />
+            <tbody>
+              {batches.map((r,i)=>(
+                <tr key={i}>
+                  <td style={s.td}>{r.id}</td><td style={s.td}>{r.total}</td>
+                  <td style={s.td}>{r.success}</td><td style={s.td}>{r.fail}</td>
+                  <td style={s.td}>{r.cancel}</td><td style={s.td}>{r.time}</td>
+                  <td style={s.td}><Tag v={r.status}/></td>
+                  <td style={s.td}><A label="发放明细"/></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Pager total={3} />
+        </>}
+      </div>
+    </div>
+  );
+}
+
+function TaskSettleBatchPage({ setPage }) {
+  const steps = ["导入结算名单","信息确认","等待审核后确认打款"];
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const fileRef = React.useRef();
+  const handleFileChange = (e) => {
+    const f = e.target.files[0];
+    if(f) setUploadedFile(f.name);
+  };
+  return (
+    <div>
+      <PageHd title="任务结算" crumb="批量结算" onBack={()=>setPage("task-settle")} />
+      <div style={{...s.card,margin:"14px 20px 20px",padding:"28px 32px"}}>
+        {/* Step bar */}
+        <div style={{display:"flex",gap:4,marginBottom:32,alignItems:"center"}}>
+          {steps.map((step,i)=>(
+            <React.Fragment key={i}>
+              <div style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"10px 16px",
+                background:i===0?"#f0fff8":"#fafafa",border:`1px solid ${i===0?"#52c41a":"#e0e0e0"}`,borderRadius:4}}>
+                <span style={{width:24,height:24,borderRadius:"50%",background:i===0?"#52c41a":"#ddd",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>{i+1}</span>
+                <span style={{fontSize:13,color:i===0?"#52c41a":"#aaa",whiteSpace:"nowrap"}}>{step}</span>
+              </div>
+              {i<steps.length-1&&<span style={{color:"#ccc",fontSize:16,flexShrink:0}}>▶</span>}
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{maxWidth:480,display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <span style={{color:"#666",fontSize:13,width:80,textAlign:"right",flexShrink:0}}>当前商户：</span>
+            <input disabled defaultValue="广州聚客网络科技有限公司" style={{...s.input,background:"#fafafa",color:"#aaa",flex:1}} />
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <span style={{color:"#666",fontSize:13,width:80,textAlign:"right",flexShrink:0}}>服务公司：</span>
+            <input disabled defaultValue="丽水正昀数字科技有限公司(招商银行)" style={{...s.input,background:"#fafafa",color:"#aaa",flex:1}} />
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:6,alignItems:"center"}}>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:"none"}} onChange={handleFileChange} />
+            <Btn onClick={()=>fileRef.current.click()}>上传结算文件</Btn>
+            <a href="data:application/vnd.ms-excel;base64,," download="结算模版.xlsx" style={{...s.outBtn,textDecoration:"none",display:"inline-block",lineHeight:"normal",padding:"6px 16px"}}>下载结算模版</a>
+          </div>
+          {uploadedFile&&(
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#f0fff8",border:"1px solid #b7eb8f",borderRadius:4,fontSize:13}}>
+              <span style={{color:"#52c41a"}}>✓</span>
+              <span style={{color:"#333"}}>已选择：{uploadedFile}</span>
+              <span onClick={()=>setUploadedFile(null)} style={{marginLeft:"auto",cursor:"pointer",color:"#aaa",fontSize:16}}>×</span>
+            </div>
+          )}
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
+            {["导入数据文件需要跟模板格式完全一致","建议单个文件数据不能超过2000条","如果有未签约的人才数据，请先人才签约后再结算上传","结算人才的银行账号暂不支持银行存折"].map((t,i)=>(
+              <div key={i} style={{display:"flex",gap:6,alignItems:"flex-start"}}>
+                <span style={{color:ACCENT,fontSize:12,marginTop:2}}>▶</span>
+                <span style={{fontSize:13,color:ACCENT}}>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskDeliveryPage() {
+  const [showModal, setShowModal] = useState(false);
+  const [tab, setTab] = useState("待提交");
+  const [files, setFiles] = useState({confirm:"",settle:""});
+  const confirmRef = React.useRef();
+  const settleRef = React.useRef();
+  const rows = [
+    {id:"10866",total:170,success:170,fail:0,cancel:0,time:"2026-05-09 15:12:12",status:"待提交"},
+    {id:"10865",total:240,success:240,fail:0,cancel:0,time:"2026-05-09 15:11:43",status:"待提交"},
+    {id:"10860",total:240,success:240,fail:0,cancel:0,time:"2026-05-08 21:01:02",status:"待提交"},
+  ];
+  return (
+    <div>
+      <PageHd title="任务交付" />
+      <SearchBox>
+        <FInput label="批次号：" placeholder="请输入批次号" />
+        <FDate label="订单时间：" />
+      </SearchBox>
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <TabBar tabs={["待提交","审核通过"]} active={tab} onChange={setTab} />
+        <table style={{width:"100%"}}>
+          <TH cols={["☐","结算批次ID","总金额","成功金额","失败金额","取消金额","结算时间","交付状态","驳回意见","确认函","结算清单","操作"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={s.td}><input type="checkbox" style={{accentColor:ACCENT}}/></td>
+                <td style={s.td}>{r.id}</td><td style={s.td}>{r.total}</td>
+                <td style={s.td}>{r.success}</td><td style={s.td}>{r.fail}</td>
+                <td style={s.td}>{r.cancel}</td><td style={s.td}>{r.time}</td>
+                <td style={s.td}><Tag v={r.status}/></td>
+                <td style={s.td}/><td style={s.td}/><td style={s.td}/>
+                <td style={s.td}>
+                  <A label="发放明细"/>
+                  <br/><A label="上传文件" onClick={()=>{ setFiles({confirm:"",settle:""}); setShowModal(true); }}/>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {showModal&&(
+        <Modal title="上传文件" onClose={()=>setShowModal(false)}>
+          <input ref={confirmRef} type="file" style={{display:"none"}} onChange={e=>setFiles(f=>({...f,confirm:e.target.files[0]?.name||""}))} />
+          <input ref={settleRef} type="file" style={{display:"none"}} onChange={e=>setFiles(f=>({...f,settle:e.target.files[0]?.name||""}))} />
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+            <span style={{width:60,fontSize:13,color:"#666",textAlign:"right",flexShrink:0}}>确认函</span>
+            <input readOnly value={files.confirm} placeholder="请选择文件" style={{...s.input,flex:1,background:"#fafafa",cursor:"pointer"}} onClick={()=>confirmRef.current.click()} />
+            <Btn onClick={()=>confirmRef.current.click()}>浏览...</Btn>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+            <span style={{width:60,fontSize:13,color:"#666",textAlign:"right",flexShrink:0}}>结算清单</span>
+            <input readOnly value={files.settle} placeholder="请选择文件" style={{...s.input,flex:1,background:"#fafafa",cursor:"pointer"}} onClick={()=>settleRef.current.click()} />
+            <Btn onClick={()=>settleRef.current.click()}>浏览...</Btn>
+          </div>
+          <div style={{display:"flex",justifyContent:"center",gap:12,marginTop:20}}>
+            <GBtn onClick={()=>setShowModal(false)}>取 消</GBtn>
+            <Btn onClick={()=>setShowModal(false)}>确 定</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function InvoicePage() {
+  const [tab, setTab] = useState("充值待开");
+  const rows = [
+    {amount:85000,actual:"80952.38",fee:"4047.62",status:"充值成功",arrived:"2026-04-30 20:07:25",charged:"2026-04-30 20:07:25"},
+    {amount:50000,actual:"47619.05",fee:"2380.95",status:"充值成功",arrived:"2026-05-01 18:31:05",charged:"2026-05-01 18:31:05"},
+    {amount:30000,actual:"28571.43",fee:"1428.57",status:"充值成功",arrived:"2026-05-02 21:52:35",charged:"2026-05-02 21:52:35"},
+    {amount:30000,actual:"28571.43",fee:"1428.57",status:"充值成功",arrived:"2026-05-03 21:29:55",charged:"2026-05-03 21:29:55"},
+    {amount:25000,actual:"23809.52",fee:"1190.48",status:"充值成功",arrived:"2026-05-04 20:56:15",charged:"2026-05-04 20:56:15"},
+    {amount:20000,actual:"19047.62",fee:"952.38",status:"充值成功",arrived:"2026-05-05 19:10:35",charged:"2026-05-05 19:10:35"},
+  ];
+  return (
+    <div>
+      <PageHd title="财务管理 / 在线开票" />
+      <div style={{...s.card,margin:"14px 20px 0",padding:"20px 24px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}>
+          <span style={{width:18,height:18,borderRadius:"50%",background:"#1890ff",color:"#fff",fontSize:11,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>⓪</span>
+          <span style={{fontSize:14,fontWeight:600,color:"#333"}}>开票金额</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:0}}>
+          {[{label:"可开票金额（元）",val:"355000"},{label:"开票中金额（元）",val:"1226000"},{label:"已开票金额（元）",val:"3960000"}].map((s2,i)=>(
+            <div key={i} style={{paddingRight:i<2?28:0,borderRight:i<2?"1px solid #f0f0f0":"none",paddingLeft:i>0?28:0}}>
+              <div style={{fontSize:12,color:"#999",marginBottom:8}}>{s2.label}</div>
+              <div style={{fontSize:26,fontWeight:700,color:"#222"}}>{s2.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{...s.card,margin:"12px 20px 20px"}}>
+        <TabBar tabs={["充值待开","全部发票","审核中","审核通过","审核失败","发票已开具"]} active={tab} onChange={setTab} />
+        <table style={{width:"100%"}}>
+          <TH cols={["☐","充值金额","实际到账金额","服务费金额","状态","到账时间","备注","充值时间"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={s.td}><input type="checkbox" style={{accentColor:ACCENT}}/></td>
+                <td style={s.td}>{r.amount}</td><td style={s.td}>{r.actual}</td><td style={s.td}>{r.fee}</td>
+                <td style={s.td}><Tag v={r.status}/></td>
+                <td style={s.td}>{r.arrived}</td><td style={s.td}/><td style={s.td}>{r.charged}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager total={rows.length} />
+      </div>
+    </div>
+  );
+}
+
+function RechargePage() {
+  const [showBank, setShowBank] = useState(false);
+  const rows = [
+    {time:"2026-05-08 20:12:21",amount:35000,actual:"33333.33",fee:"1666.67",status:"充值成功",arrived:"2026-05-08 20:12:21"},
+    {time:"2026-05-07 21:37:25",amount:60000,actual:"57142.86",fee:"2857.14",status:"充值成功",arrived:"2026-05-07 21:37:25"},
+    {time:"2026-05-04 21:14:09",amount:100000,actual:"95238.10",fee:"4761.90",status:"充值成功",arrived:"2026-05-04 21:14:09"},
+    {time:"2026-05-03 21:29:33",amount:30000,actual:"28571.43",fee:"1428.57",status:"充值成功",arrived:"2026-05-03 21:29:55"},
+  ];
+  const bankInfo = [
+    {label:"收款单位",val:"丽水正昀数字科技有限公司"},
+    {label:"收款账号",val:"331906282182001"},
+    {label:"收款银行",val:"招商银行丽水分行"},
+    {label:"银行联行号",val:"308327000800"},
+  ];
+  return (
+    <div>
+      <PageHd title="财务管理 / 账户充值" right={<Btn onClick={()=>setShowBank(true)}>银行充值信息</Btn>} />
+      <div style={{...s.card,margin:"14px 20px 0",padding:"20px 24px"}}>
+        <div style={{fontSize:14,fontWeight:600,color:"#333",marginBottom:16}}>金额数据</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,paddingBottom:16,borderBottom:"1px solid #f5f5f5"}}>
+          {[{dot:"#52c41a",lbl:"当前账户金额（元）",val:"30525.22",red:true,big:true},{dot:"#52c41a",lbl:"可用余额（元）",val:"30525.22"},{dot:"#fa8c16",lbl:"不可用余额（元）",val:"0"}].map((i2,j)=>(
+            <div key={j}>
+              <div style={{display:"flex",alignItems:"center",gap:4,fontSize:12,color:"#666",marginBottom:6}}>
+                <span style={{width:8,height:8,borderRadius:"50%",background:i2.dot,display:"inline-block"}}/>
+                {i2.lbl}<span style={{color:"#ccc"}}>❓</span>
+              </div>
+              <div style={{fontSize:i2.big?22:18,fontWeight:600,color:i2.red?ACCENT:"#333"}}>{i2.val}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,paddingTop:16}}>
+          {[{dot:"#fa8c16",lbl:"总充值金额（元）",val:"5541000"},{dot:"#fa8c16",lbl:"总下发金额（元）",val:"5246617.55"},{dot:"#fa8c16",lbl:"服务费（元）",val:"263857.23"}].map((i2,j)=>(
+            <div key={j}>
+              <div style={{display:"flex",alignItems:"center",gap:4,fontSize:12,color:"#666",marginBottom:6}}>
+                <span style={{width:8,height:8,borderRadius:"50%",background:i2.dot,display:"inline-block"}}/>
+                {i2.lbl}<span style={{color:"#ccc"}}>❓</span>
+              </div>
+              <div style={{fontSize:18,fontWeight:600,color:"#333"}}>{i2.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{...s.card,margin:"12px 20px 20px",padding:"18px 20px"}}>
+        <div style={{fontSize:14,fontWeight:600,color:"#333",marginBottom:14}}>充值信息</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:"8px 14px",marginBottom:14,alignItems:"center"}}>
+          <FInput label="充值金额：" placeholder="请输入金额" width={130} />
+          <FDate label="创建时间：" />
+          <Btn>查询</Btn><OBtn>导出</OBtn>
+        </div>
+        <table style={{width:"100%"}}>
+          <TH cols={["充值时间","充值金额","实际到账金额","服务费金额","状态","到账时间","备注"]} />
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={i}>
+                <td style={s.td}>{r.time}</td><td style={s.td}>{r.amount}</td>
+                <td style={s.td}>{r.actual}</td><td style={s.td}>{r.fee}</td>
+                <td style={s.td}><Tag v={r.status}/></td>
+                <td style={s.td}>{r.arrived}</td><td style={s.td}/>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager total={rows.length} />
+      </div>
+      {showBank&&(
+        <Modal title="银行充值信息" onClose={()=>setShowBank(false)}>
+          <div style={{background:"#fffbe6",border:"1px solid #ffe58f",borderRadius:4,padding:"10px 14px",marginBottom:20,fontSize:13,color:"#856404",lineHeight:1.6}}>
+            ⚠️ 请务必使用企业对公账户转账，个人账户打款将无法到账。备注请填写您的企业名称。
+          </div>
+          {bankInfo.map((b,i)=>(
+            <div key={i} style={{display:"flex",padding:"10px 0",borderBottom:"1px solid #f5f5f5",alignItems:"center"}}>
+              <span style={{width:90,color:"#999",fontSize:13,flexShrink:0}}>{b.label}</span>
+              <span style={{flex:1,color:"#222",fontSize:13,fontWeight:i<2?600:400}}>{b.val}</span>
+              <span onClick={()=>navigator.clipboard?.writeText(b.val)} style={{color:ACCENT,fontSize:12,cursor:"pointer",marginLeft:8}}>复制</span>
+            </div>
+          ))}
+          <div style={{marginTop:20,padding:"10px 14px",background:"#f5f6fa",borderRadius:4,fontSize:12,color:"#888",lineHeight:1.7}}>
+            到账时间：工作日转账一般 1-2 小时内到账，非工作日顺延至下一工作日处理。<br/>
+            如有疑问请联系客服：400-XXX-XXXX
+          </div>
+          <div style={{display:"flex",justifyContent:"center",marginTop:20}}>
+            <Btn onClick={()=>setShowBank(false)}>我知道了</Btn>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function RefundPage({ setPage }) {
+  return (
+    <div>
+      <PageHd title="财务管理 / 退款明细" right={<Btn onClick={()=>setPage("refund-apply")}>发起退款</Btn>} />
+      <SearchBox>
+        <FInput label="退款编号：" placeholder="请输入退款编号" width={150} />
+        <FDate label="创建时间：" />
+      </SearchBox>
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <table style={{width:"100%"}}>
+          <TH cols={["退款编号","申请时间","退款总金额","服务费退款","实际退款金额","企业名称","服务公司","打款状态","审核状态"]} />
+          <tbody><EmptyRow cols={9}/></tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DeclarePage() {
+  return (
+    <div>
+      <PageHd title="申报记录" />
+      <div style={{...s.card,margin:"14px 20px 0",padding:"14px 18px"}}>
+        <div style={{display:"flex",flexWrap:"wrap",gap:"10px 16px",alignItems:"center"}}>
+          <FInput label="姓名：" placeholder="请输入姓名" />
+          <FInput label="手机号：" placeholder="请输入手机号" width={140} />
+          <FInput label="身份证号：" placeholder="请输入身份证号" width={160} />
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:13,color:"#666"}}>月份：</span>
+            <input type="month" defaultValue="2026-04" style={{...s.input,width:130}}/>
+            <span style={{color:"#999"}}>至</span>
+            <input type="month" defaultValue="2026-04" style={{...s.input,width:130}}/>
+          </div>
+          <Btn>查询</Btn><OBtn>导出</OBtn>
+        </div>
+      </div>
+      <div style={{...s.card,margin:"12px 20px 20px"}}>
+        <table style={{width:"100%"}}>
+          <TH cols={["月份","姓名","手机号码","证件号码","结算金额","个人所得税","增值税","附加税","税后金额","服务公司"]} />
+          <tbody><EmptyRow cols={10}/></tbody>
+        </table>
+        <Pager total={0} />
+      </div>
+    </div>
+  );
+}
+
+function MsgCenterPage() {
+  const [tab, setTab] = useState("系统公告");
+  return (
+    <div>
+      <PageHd title="消息中心" />
+      <div style={{...s.card,margin:"14px 20px 20px"}}>
+        <TabBar tabs={["系统公告","商户消息"]} active={tab} onChange={setTab} />
+        <table style={{width:"100%"}}>
+          <TH cols={["消息内容","发布时间"]} />
+          <tbody><EmptyRow cols={2}/></tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AccountInfoPage() {
+  const row = {display:"flex",alignItems:"flex-start",marginBottom:18};
+  const lbl = {width:110,textAlign:"right",color:"#999",fontSize:13,paddingTop:1,flexShrink:0};
+  const val = {color:"#333",fontSize:13,paddingLeft:16};
+  return (
+    <div>
+      <PageHd title="账户信息" />
+      <div style={{...s.card,margin:"14px 20px 20px",padding:"28px 32px"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
+          <div style={{paddingRight:40,borderRight:"1px solid #f5f5f5"}}>
+            {[
+              {lbl:"公司名：",val:"广州●●●●网络科技有限公司"},
+              {lbl:"公司账户：",val:"A●●●●●●●●●●●●●●"},
+              {lbl:"开户行：",val:"广州●●●●银行支行"},
+              {lbl:"开户名：",val:"中国建设银行广东●●分行"},
+              {lbl:"公司余额：",val:"●●●●5.22 元",bold:true},
+              {lbl:"可用余额预警：",toggle:true},
+              {lbl:"已绑定手机账号：",val:"134****9071",link:"请联系客服更换您绑定的手机号"},
+            ].map((f,i)=>(
+              <div key={i} style={row}>
+                <span style={lbl}>{f.lbl}</span>
+                <span style={{...val,fontWeight:f.bold?600:400}}>
+                  {f.toggle
+                    ?<span style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:34,height:19,background:"#e0e0e0",borderRadius:10,display:"inline-block",cursor:"pointer"}}/>预警值为 ¥ <span style={{color:ACCENT,cursor:"pointer"}}>修改</span></span>
+                    :f.link?<span>{f.val} <span style={{color:ACCENT,cursor:"pointer",fontSize:12}}>{f.link}</span></span>
+                    :f.val}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div style={{paddingLeft:40}}>
+            {[
+              {lbl:"打款户名：",val:"丽●●数字科技有限公司"},
+              {lbl:"打款账户：",val:"5●●●●●●●●●●●●●●"},
+              {lbl:"打款开户行：",val:"杭州西溪路支行"},
+              {lbl:"服务费率：",val:"5.00%",green:true,big:true},
+              {lbl:"密码：",val:"已设置",link:"修改"},
+            ].map((f,i)=>(
+              <div key={i} style={row}>
+                <span style={lbl}>{f.lbl}</span>
+                <span style={{...val,color:f.green?"#52c41a":val.color,fontWeight:f.big?700:400,fontSize:f.big?17:13}}>
+                  {f.link?<span>{f.val} <span style={{color:ACCENT,cursor:"pointer",fontSize:12}}>{f.link}</span></span>:f.val}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ApiConfigPage() {
+  return (
+    <div>
+      <PageHd title="API配置" />
+      <div style={{...s.card,margin:"14px 20px 20px",padding:"32px"}}>
+        <div style={{color:"#aaa",fontSize:14,textAlign:"center",padding:"40px 0"}}>API配置功能开发中…</div>
+      </div>
+    </div>
+  );
+}
+
+function TalentDetailPage({ setPage, talentId }) {
+  const idNum = talentId?.replace("talent-detail-","") || "720881";
+  const talents = {
+    "720881":{name:"覃思娴",phone:"153****5167",idcard:"4525**********3760",bank:"6222**********7805",gender:"女",birth:"1995年03月12日",sign:"已签约",task:"线下通讯网络推广",signTime:"2026-04-10 09:22:11"},
+    "720847":{name:"黄婷",phone:"155****5537",idcard:"4521**********152X",bank:"6236**********6897",gender:"女",birth:"1998年07月05日",sign:"已签约",task:"线下通讯网络推广",signTime:"2026-04-09 14:30:00"},
+    "720842":{name:"郭声昭",phone:"188****7728",idcard:"4414**********4058",bank:"6217**********5502",gender:"男",birth:"1990年11月20日",sign:"已签约",task:"线下通讯网络推广",signTime:"2026-04-08 10:00:00"},
+  };
+  const t = talents[idNum] || talents["720881"];
+  const row = {display:"flex",padding:"13px 0",borderBottom:"1px solid #f5f5f5",alignItems:"center"};
+  const lbl = {width:120,color:"#999",fontSize:13,flexShrink:0};
+  const val = {color:"#333",fontSize:13,flex:1};
+  return (
+    <div>
+      <PageHd title="任务签约 / 签约人才 / 人才详情" onBack={()=>setPage("sign-talent")} />
+      <div style={{...s.card,margin:"14px 20px 20px",padding:"24px 32px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:20,paddingBottom:20,borderBottom:"1px solid #f0f0f0",marginBottom:8}}>
+          <div style={{width:64,height:64,borderRadius:"50%",background:"#f0f0f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>👤</div>
+          <div>
+            <div style={{fontSize:18,fontWeight:700,color:"#222",marginBottom:4}}>{t.name}</div>
+            <Tag v={t.sign}/>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 40px"}}>
+          <div>
+            {[
+              {lbl:"人才编号",val:idNum},
+              {lbl:"姓名",val:t.name},
+              {lbl:"性别",val:t.gender},
+              {lbl:"出生日期",val:t.birth},
+              {lbl:"手机号码",val:t.phone},
+            ].map((f,i)=>(
+              <div key={i} style={row}>
+                <span style={lbl}>{f.lbl}</span>
+                <span style={val}>{f.val}</span>
+              </div>
+            ))}
+          </div>
+          <div>
+            {[
+              {lbl:"证件号码",val:t.idcard},
+              {lbl:"银行账号",val:t.bank},
+              {lbl:"签约任务",val:t.task},
+              {lbl:"签约时间",val:t.signTime},
+              {lbl:"签约状态",val:<Tag v={t.sign}/>},
+            ].map((f,i)=>(
+              <div key={i} style={row}>
+                <span style={lbl}>{f.lbl}</span>
+                <span style={val}>{f.val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RefundApplyPage({ setPage }) {
+  const [toast, setToast] = useState(null);
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null), 2500); };
+  const row = {display:"flex",alignItems:"flex-start",gap:12,marginBottom:20};
+  const lbl = {width:100,textAlign:"right",color:"#555",fontSize:13,paddingTop:7,flexShrink:0};
+  const req = <span style={{color:ACCENT}}>* </span>;
+  return (
+    <div>
+      <PageHd title="财务管理 / 退款明细 / 发起退款" onBack={()=>setPage("refund")} />
+      <div style={{...s.card,margin:"14px 20px 80px",padding:"28px 40px"}}>
+        <div style={{fontSize:13,color:"#fa8c16",background:"#fffbe6",border:"1px solid #ffe58f",borderRadius:4,padding:"10px 14px",marginBottom:24,lineHeight:1.7}}>
+          ⚠️ 退款申请提交后，平台将在 3-5 个工作日内审核并原路退回至您的对公账户。服务费不予退还。
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}退款金额：</span>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <input placeholder="请输入退款金额" type="number" style={{...s.input,width:220}} />
+            <span style={{fontSize:13,color:"#888"}}>元（可用余额：30525.22 元）</span>
+          </div>
+        </div>
+        <div style={row}>
+          <span style={lbl}>{req}退款原因：</span>
+          <select style={{...s.select,width:220}}>
+            <option value="">请选择退款原因</option>
+            <option>业务调整，余额不再使用</option>
+            <option>充值金额过多</option>
+            <option>合作终止</option>
+            <option>其他原因</option>
+          </select>
+        </div>
+        <div style={row}>
+          <span style={lbl}>备注说明：</span>
+          <textarea placeholder="请输入补充说明（选填）" style={{width:340,height:80,padding:"8px 10px",border:"1px solid #ddd",borderRadius:4,fontSize:13,outline:"none",resize:"vertical",fontFamily:"inherit"}} />
+        </div>
+        <div style={row}>
+          <span style={lbl}>收款账户：</span>
+          <div style={{fontSize:13,color:"#333",paddingTop:7,lineHeight:1.8}}>
+            <div>户名：广州聚客网络科技有限公司</div>
+            <div style={{color:"#999",fontSize:12}}>退款将原路退回至您的银行对公账户，预计 3-5 个工作日到账</div>
+          </div>
+        </div>
+      </div>
+      <div style={{position:"fixed",bottom:0,left:182,right:0,background:"#fff",borderTop:"1px solid #eee",padding:"12px 40px",display:"flex",gap:12}}>
+        <Btn onClick={()=>{ showToast("退款申请已提交，请等待平台审核"); setTimeout(()=>setPage("refund"),2600); }}>提交退款申请</Btn>
+        <GBtn onClick={()=>setPage("refund")}>取消</GBtn>
+      </div>
+      {toast&&(
+        <div style={{position:"fixed",top:64,left:"50%",transform:"translateX(-50%)",zIndex:2000,
+          background:"#52c41a",color:"#fff",padding:"10px 24px",borderRadius:6,fontSize:13,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.15)",display:"flex",alignItems:"center",gap:8,whiteSpace:"nowrap"}}>
+          ✓ {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── App ────────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState("home");
+  const render = () => {
+    if(page.startsWith("talent-detail-")) return <TalentDetailPage setPage={setPage} talentId={page}/>;
+    switch(page) {
+      case "home":              return <HomePage setPage={setPage}/>;
+      case "task-publish":      return <TaskPublishPage setPage={setPage}/>;
+      case "task-new":          return <TaskNewPage setPage={setPage}/>;
+      case "sign-talent":       return <SignTalentPage setPage={setPage}/>;
+      case "task-review":       return <TaskReviewPage/>;
+      case "delivery-review":   return <DeliveryReviewPage/>;
+      case "task-settle":       return <TaskSettlePage setPage={setPage}/>;
+      case "task-settle-batch": return <TaskSettleBatchPage setPage={setPage}/>;
+      case "task-delivery":     return <TaskDeliveryPage/>;
+      case "invoice":           return <InvoicePage/>;
+      case "recharge":          return <RechargePage/>;
+      case "refund":            return <RefundPage setPage={setPage}/>;
+      case "refund-apply":      return <RefundApplyPage setPage={setPage}/>;
+      case "declare":           return <DeclarePage/>;
+      case "msg-center":        return <MsgCenterPage/>;
+      case "account-info":      return <AccountInfoPage/>;
+      case "api-config":        return <ApiConfigPage/>;
+      default:                  return <div style={{padding:40,color:"#aaa"}}>页面开发中…</div>;
+    }
+  };
+  return <Layout page={page} setPage={setPage}>{render()}</Layout>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
